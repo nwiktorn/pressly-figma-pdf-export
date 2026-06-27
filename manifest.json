@@ -1,0 +1,8 @@
+{
+  "name": "PDF Export Pro",
+  "id": "pdf-export-pro-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"]
+}
