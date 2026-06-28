@@ -687,17 +687,17 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
 
 .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-.content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.content { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
 
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 
-.card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--border); }
 .card-header.collapsible { cursor: pointer; user-select: none; }
 .card-header.collapsible:hover { background: var(--surface2); }
 
 .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); }
 
-.card-body { padding: 12px 14px; }
+.card-body { padding: 10px 12px; }
 
 .collapse-icon { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
 .collapsed .collapse-icon { transform: rotate(-90deg); }
@@ -708,7 +708,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
 .btn-tiny { font-size: 11px; padding: 3px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
 .btn-tiny:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
 
-.frame-list { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; max-height: 170px; overflow-y: auto; }
+.frame-list { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; max-height: 130px; overflow-y: auto; }
 
 .frame-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; user-select: none; }
 .frame-item:last-child { border-bottom: none; }
@@ -726,13 +726,13 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
 
 .toggle-group { display: flex; gap: 6px; }
 
-.toggle-card { flex: 1; border: 2px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; transition: all 0.15s; background: var(--surface); user-select: none; }
+.toggle-card { flex: 1; border: 2px solid var(--border); border-radius: var(--radius); padding: 8px 10px; cursor: pointer; transition: all 0.15s; background: var(--surface); user-select: none; }
 .toggle-card:hover { border-color: #93C5FD; background: #F8FBFF; }
 .toggle-card.active { border-color: var(--accent); background: var(--accent-bg); }
 .toggle-card input[type="radio"] { display: none; }
-.toggle-icon { font-size: 16px; margin-bottom: 4px; }
-.toggle-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-.toggle-desc { font-size: 10px; color: var(--text2); line-height: 1.4; }
+.toggle-icon { font-size: 14px; margin-bottom: 2px; }
+.toggle-label { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
+.toggle-desc { font-size: 10px; color: var(--text2); line-height: 1.3; }
 .toggle-card.active .toggle-label { color: var(--accent); }
 
 .info-banner { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11px; line-height: 1.4; margin-top: 8px; }
@@ -759,7 +759,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
 
 .divider { height: 1px; background: var(--border); margin: 4px 0; }
 
-.footer { padding: 10px 12px; border-top: 1.5px solid var(--border); background: var(--surface); display: flex; gap: 8px; flex-shrink: 0; }
+.footer { padding: 8px 10px; border-top: 1.5px solid var(--border); background: var(--surface); display: flex; gap: 8px; flex-shrink: 0; }
 
 .btn { flex: 1; padding: 9px 16px; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; }
 .btn-secondary { background: var(--surface2); border: 1.5px solid var(--border); color: var(--text2); }
@@ -812,99 +812,89 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
     </div>
   </div>
 
-  <!-- EXPORT MODE -->
+  <!-- EXPORT MODE + COLOR PROFILE (one card, 2×2 grid) -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Tryb eksportu</span></div>
+    <div class="card-header"><span class="card-title">Ustawienia eksportu</span></div>
     <div class="card-body">
-      <div class="toggle-group">
+      <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Tryb</div>
+      <div class="toggle-group" style="margin-bottom:10px">
         <label class="toggle-card active" id="modeMultiCard">
           <input type="radio" name="mode" value="multi" checked>
           <div class="toggle-icon">📄</div>
           <div class="toggle-label">Jeden PDF</div>
-          <div class="toggle-desc">Wszystkie framy jako jeden wielostronicowy plik</div>
+          <div class="toggle-desc">Wielostronicowy plik</div>
         </label>
         <label class="toggle-card" id="modeSepCard">
           <input type="radio" name="mode" value="separate">
           <div class="toggle-icon">🗂️</div>
           <div class="toggle-label">Osobne pliki</div>
-          <div class="toggle-desc">Każdy frame jako osobny PDF, pobrane razem jako ZIP</div>
+          <div class="toggle-desc">Każdy frame → ZIP</div>
         </label>
       </div>
-    </div>
-  </div>
-
-  <!-- COLOR PROFILE -->
-  <div class="card">
-    <div class="card-header"><span class="card-title">Profil koloru</span></div>
-    <div class="card-body">
+      <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Profil koloru</div>
       <div class="toggle-group">
         <label class="toggle-card active" id="profileRGBCard">
           <input type="radio" name="profile" value="rgb" checked>
           <div class="toggle-icon">🖥️</div>
           <div class="toggle-label">sRGB — Wektor</div>
-          <div class="toggle-desc">Tekst zaznaczalny, fonty osadzone. Do ekranu i druku cyfrowego.</div>
+          <div class="toggle-desc">Tekst zaznaczalny, fonty osadzone</div>
         </label>
         <label class="toggle-card" id="profileCMYKCard">
           <input type="radio" name="profile" value="cmyk">
           <div class="toggle-icon">🖨️</div>
           <div class="toggle-label">CMYK — Druk</div>
-          <div class="toggle-desc">Raster z prawdziwą konwersją CMYK. Do offsetu, sitodruku.</div>
+          <div class="toggle-desc">Raster RGB→CMYK, do offsetu</div>
         </label>
       </div>
-      <div class="info-banner info-blue" id="bannerRGB">
+      <div class="info-banner info-blue" id="bannerRGB" style="margin-top:8px">
         <span class="banner-icon">ℹ️</span>
-        <span>Wektor PDF — tekst zaznaczalny, kolory RGB, <b>niezależny od DPI</b> (skaluje się bez utraty jakości). Idealny do maila i ekranu.</span>
+        <span>Wektor — tekst zaznaczalny, <b>niezależny od DPI</b>. Idealny do maila i ekranu.</span>
       </div>
-      <div class="info-banner info-yellow hidden" id="bannerCMYK">
+      <div class="info-banner info-yellow hidden" id="bannerCMYK" style="margin-top:8px">
         <span class="banner-icon">⚠️</span>
-        <span><b>CMYK raster</b> — tekst nie będzie zaznaczalny. Kolory konwertowane RGB→CMYK (bez profilu ICC). Przeznaczony do drukarni offsetowych.</span>
+        <span><b>CMYK raster</b> — tekst nie będzie zaznaczalny. Przeznaczony do drukarni offsetowych.</span>
+      </div>
+      <!-- QUALITY (CMYK only, inline) -->
+      <div class="hidden" id="qualityCard" style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Jakość eksportu</div>
+        <div class="pill-group" id="dpiGroup">
+          <button class="pill" data-scale="2">192 DPI<br><span style="font-size:9px;opacity:.65">ekran / web</span></button>
+          <button class="pill active" data-scale="3">288 DPI<br><span style="font-size:9px;opacity:.65">druk standard</span></button>
+          <button class="pill" data-scale="4">384 DPI<br><span style="font-size:9px;opacity:.65">offset / max</span></button>
+        </div>
+        <div class="dpi-readout" id="dpiReadout" style="margin-top:8px"></div>
+        <div class="divider" style="margin-top:8px"></div>
+        <div class="form-row">
+          <span class="form-label">Limit farby</span>
+          <input type="number" class="form-input short" id="inkLimit" value="320" min="240" max="400" step="10">
+          <span class="form-unit">%</span>
+        </div>
+        <div class="divider"></div>
+        <div class="form-row">
+          <span class="form-label">Kompresja</span>
+          <select class="form-input" id="compression">
+            <option value="flate">Bezstratna (większy plik)</option>
+            <option value="jpeg">JPEG (mniejszy plik)</option>
+          </select>
+        </div>
+        <div class="form-row hidden" id="jpegQualityRow">
+          <span class="form-label">Jakość JPEG</span>
+          <input type="range" id="jpegQuality" min="40" max="98" step="1" value="85" style="flex:1">
+          <span class="form-unit" id="jpegQualityVal">85</span>
+        </div>
+        <div class="divider"></div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="pdfxCheck">
+          <span class="checkbox-label">PDF/X-1a (OutputIntent)</span>
+          <span class="checkbox-badge" id="pdfxBadge">wył.</span>
+        </label>
       </div>
     </div>
   </div>
-
-  <!-- QUALITY (CMYK only) -->
-  <div class="card hidden" id="qualityCard">
-    <div class="card-header"><span class="card-title">Jakość eksportu</span></div>
-    <div class="card-body">
-      <div class="pill-group" id="dpiGroup">
-        <button class="pill" data-scale="2">192 DPI<br><span style="font-size:9px;opacity:.65">ekran / web</span></button>
-        <button class="pill active" data-scale="3">288 DPI<br><span style="font-size:9px;opacity:.65">druk standard</span></button>
-        <button class="pill" data-scale="4">384 DPI<br><span style="font-size:9px;opacity:.65">offset / max</span></button>
-      </div>
-      <div class="dpi-readout" id="dpiReadout"></div>
-      <div style="font-size:10px;color:var(--text3);margin-top:6px">Figma eksportuje maks. 4× (384 DPI). Do większości wydruków wystarczy 288 DPI.</div>
-      <div class="divider"></div>
-      <div class="form-row">
-        <span class="form-label">Limit farby</span>
-        <input type="number" class="form-input short" id="inkLimit" value="320" min="240" max="400" step="10">
-        <span class="form-unit">%</span>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px">Maks. pokrycie CMYK. 300–320% dla papieru powlekanego, 240–280% dla gazetowego.</div>
-      <div class="divider"></div>
-      <div class="form-row">
-        <span class="form-label">Kompresja</span>
-        <select class="form-input" id="compression">
-          <option value="flate">Bezstratna (większy plik)</option>
-          <option value="jpeg">JPEG (mniejszy plik)</option>
-        </select>
-      </div>
-      <div class="form-row hidden" id="jpegQualityRow" style="padding-left:0">
-        <span class="form-label">Jakość JPEG</span>
-        <input type="range" id="jpegQuality" min="40" max="98" step="1" value="85" style="flex:1">
-        <span class="form-unit" id="jpegQualityVal">85</span>
-      </div>
-      <div class="divider"></div>
-      <label class="checkbox-row">
-        <input type="checkbox" id="pdfxCheck">
-        <span class="checkbox-label">PDF/X-1a (OutputIntent)</span>
-        <span class="checkbox-badge" id="pdfxBadge">wył.</span>
-      </label>
-      <div style="font-size:10px;color:var(--text3);margin-top:4px" id="pdfxNote">Osadza profil Coated FOGRA39 (OutputIntent) — plik gotowy dla drukarni. Powiększa PDF o ~650 KB.</div>
-    </div>
   </div>
 
   <!-- PRINT OPTIONS -->
-  <div class="card" id="printCard">
+  <div class="card collapsed" id="printCard">
     <div class="card-header collapsible" id="printHeader">
       <span class="card-title">Opcje druku</span>
       <span class="collapse-icon">▼</span>
