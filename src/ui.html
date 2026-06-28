@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>PDF Export Pro</title>
+<!-- @INJECT:VENDOR_LIBS -->
+<!-- pdf-lib, jszip and pako are inlined here at build time.
+     Edit src/ui.html, then run `npm run build` to regenerate the root ui.html.
+     Do NOT edit the generated ui.html directly. -->
+<!-- @INJECT:APP_MODULES -->
+<!-- @INJECT:ICC_PROFILE -->
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F0F2F5;
+  --surface: #FFFFFF;
+  --surface2: #F8F9FB;
+  --border: #E2E8F0;
+  --text: #1A202C;
+  --text2: #64748B;
+  --text3: #94A3B8;
+  --accent: #2563EB;
+  --accent-bg: #DBEAFE;
+  --accent-hover: #1D4ED8;
+  --success: #059669;
+  --success-bg: #ECFDF5;
+  --radius: 8px;
+  --radius-sm: 5px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; font-size: 12px; color: var(--text); background: var(--bg); }
+
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.content { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.card-header.collapsible { cursor: pointer; user-select: none; }
+.card-header.collapsible:hover { background: var(--surface2); }
+
+.card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); }
+
+.card-body { padding: 12px 14px; }
+
+.collapse-icon { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+.collapsed .collapse-icon { transform: rotate(-90deg); }
+.collapsed .card-body-collapsible { display: none; }
+
+.frame-controls { display: flex; gap: 6px; margin-bottom: 8px; }
+
+.btn-tiny { font-size: 11px; padding: 3px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.btn-tiny:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+.frame-list { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; max-height: 170px; overflow-y: auto; }
+
+.frame-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; user-select: none; }
+.frame-item:last-child { border-bottom: none; }
+.frame-item:hover { background: var(--surface2); }
+.frame-item.checked { background: #F0F7FF; }
+
+.frame-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.frame-name { flex: 1; font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame-dims { font-size: 10px; color: var(--text3); white-space: nowrap; }
+
+.toggle-group { display: flex; gap: 6px; }
+
+.toggle-card { flex: 1; border: 2px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; transition: all 0.15s; background: var(--surface); user-select: none; }
+.toggle-card:hover { border-color: #93C5FD; background: #F8FBFF; }
+.toggle-card.active { border-color: var(--accent); background: var(--accent-bg); }
+.toggle-card input[type="radio"] { display: none; }
+.toggle-icon { font-size: 16px; margin-bottom: 4px; }
+.toggle-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.toggle-desc { font-size: 10px; color: var(--text2); line-height: 1.4; }
+.toggle-card.active .toggle-label { color: var(--accent); }
+
+.info-banner { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11px; line-height: 1.4; margin-top: 8px; }
+.info-blue { background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
+.info-yellow { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+.banner-icon { flex-shrink: 0; }
+
+.pill-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.pill { padding: 5px 12px; border-radius: 100px; border: 1.5px solid var(--border); font-size: 11px; font-weight: 500; color: var(--text2); cursor: pointer; background: var(--surface); transition: all 0.15s; font-family: inherit; line-height: 1.4; text-align: center; }
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+.pill.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+
+.form-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.form-label { font-size: 11px; color: var(--text2); min-width: 75px; flex-shrink: 0; }
+.form-input { flex: 1; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 5px 8px; font-size: 12px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
+.form-input:focus { border-color: var(--accent); }
+.form-input.short { width: 64px; flex: 0 0 auto; }
+.form-unit { font-size: 11px; color: var(--text2); flex-shrink: 0; }
+
+.checkbox-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; user-select: none; }
+.checkbox-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.checkbox-label { font-size: 12px; color: var(--text); flex: 1; }
+.checkbox-badge { font-size: 10px; color: var(--text3); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+
+.divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+.footer { padding: 10px 12px; border-top: 1.5px solid var(--border); background: var(--surface); display: flex; gap: 8px; flex-shrink: 0; }
+
+.btn { flex: 1; padding: 9px 16px; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; }
+.btn-secondary { background: var(--surface2); border: 1.5px solid var(--border); color: var(--text2); }
+.btn-secondary:hover { background: var(--border); color: var(--text); }
+.btn-primary { background: var(--accent); color: #fff; border: 1.5px solid transparent; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { background: #BFDBFE; color: #93C5FD; cursor: not-allowed; }
+
+.overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.96); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; z-index: 100; }
+.overlay.visible { display: flex; }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.prog-title { font-size: 14px; font-weight: 600; color: var(--text); text-align: center; }
+.prog-bar-bg { width: 220px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.prog-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; width: 0%; }
+.prog-sub { font-size: 11px; color: var(--text2); text-align: center; max-width: 260px; }
+
+.results-card { display: none; }
+.results-card.visible { display: block; }
+
+.result-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--success-bg); border: 1px solid #A7F3D0; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 4px; transition: background 0.1s; }
+.result-item:hover { background: #D1FAE5; }
+.result-icon { font-size: 15px; flex-shrink: 0; }
+.result-name { flex: 1; font-size: 11px; font-weight: 500; color: #065F46; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-size { font-size: 10px; color: var(--text2); flex-shrink: 0; }
+
+.empty-state { text-align: center; padding: 20px; color: var(--text3); font-size: 12px; }
+.hidden { display: none !important; }
+::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+<div class="content" id="mainContent">
+
+  <!-- FRAMES -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Framy</span>
+      <span id="frameCount" style="font-size:11px;color:var(--text3)"></span>
+    </div>
+    <div class="card-body">
+      <div class="frame-controls">
+        <button class="btn-tiny" id="selectAll">Zaznacz wszystkie</button>
+        <button class="btn-tiny" id="deselectAll">Odznacz wszystkie</button>
+      </div>
+      <div class="frame-list" id="frameList">
+        <div class="empty-state">Ładowanie framów...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT MODE -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Tryb eksportu</span></div>
+    <div class="card-body">
+      <div class="toggle-group">
+        <label class="toggle-card active" id="modeMultiCard">
+          <input type="radio" name="mode" value="multi" checked>
+          <div class="toggle-icon">📄</div>
+          <div class="toggle-label">Jeden PDF</div>
+          <div class="toggle-desc">Wszystkie framy jako jeden wielostronicowy plik</div>
+        </label>
+        <label class="toggle-card" id="modeSepCard">
+          <input type="radio" name="mode" value="separate">
+          <div class="toggle-icon">🗂️</div>
+          <div class="toggle-label">Osobne pliki</div>
+          <div class="toggle-desc">Każdy frame jako osobny PDF, pobrane razem jako ZIP</div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLOR PROFILE -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Profil koloru</span></div>
+    <div class="card-body">
+      <div class="toggle-group">
+        <label class="toggle-card active" id="profileRGBCard">
+          <input type="radio" name="profile" value="rgb" checked>
+          <div class="toggle-icon">🖥️</div>
+          <div class="toggle-label">sRGB — Wektor</div>
+          <div class="toggle-desc">Tekst zaznaczalny, fonty osadzone. Do ekranu i druku cyfrowego.</div>
+        </label>
+        <label class="toggle-card" id="profileCMYKCard">
+          <input type="radio" name="profile" value="cmyk">
+          <div class="toggle-icon">🖨️</div>
+          <div class="toggle-label">CMYK — Druk</div>
+          <div class="toggle-desc">Raster z prawdziwą konwersją CMYK. Do offsetu, sitodruku.</div>
+        </label>
+      </div>
+      <div class="info-banner info-blue" id="bannerRGB">
+        <span class="banner-icon">ℹ️</span>
+        <span>Wektor PDF — tekst zaznaczalny, kolory RGB. Idealny do wysyłania mailem i podglądu na ekranie.</span>
+      </div>
+      <div class="info-banner info-yellow hidden" id="bannerCMYK">
+        <span class="banner-icon">⚠️</span>
+        <span><b>CMYK raster</b> — tekst nie będzie zaznaczalny. Kolory konwertowane RGB→CMYK (bez profilu ICC). Przeznaczony do drukarni offsetowych.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUALITY (CMYK only) -->
+  <div class="card hidden" id="qualityCard">
+    <div class="card-header"><span class="card-title">Jakość eksportu</span></div>
+    <div class="card-body">
+      <div class="pill-group" id="dpiGroup">
+        <button class="pill" data-scale="2">192 DPI<br><span style="font-size:9px;opacity:.65">ekran / web</span></button>
+        <button class="pill active" data-scale="3">288 DPI<br><span style="font-size:9px;opacity:.65">druk standard</span></button>
+        <button class="pill" data-scale="4">384 DPI<br><span style="font-size:9px;opacity:.65">offset / max</span></button>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">Figma eksportuje maks. 4× (384 DPI). Do większości wydruków wystarczy 288 DPI.</div>
+      <div class="divider"></div>
+      <div class="form-row">
+        <span class="form-label">Limit farby</span>
+        <input type="number" class="form-input short" id="inkLimit" value="320" min="240" max="400" step="10">
+        <span class="form-unit">%</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">Maks. pokrycie CMYK. 300–320% dla papieru powlekanego, 240–280% dla gazetowego.</div>
+      <div class="divider"></div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="pdfxCheck">
+        <span class="checkbox-label">PDF/X-1a (OutputIntent)</span>
+        <span class="checkbox-badge" id="pdfxBadge">wył.</span>
+      </label>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px" id="pdfxNote">Osadza profil Coated FOGRA39 (OutputIntent) — plik gotowy dla drukarni. Powiększa PDF o ~650 KB.</div>
+    </div>
+  </div>
+
+  <!-- PRINT OPTIONS -->
+  <div class="card" id="printCard">
+    <div class="card-header collapsible" id="printHeader">
+      <span class="card-title">Opcje druku</span>
+      <span class="collapse-icon">▼</span>
+    </div>
+    <div class="card-body card-body-collapsible">
+      <label class="checkbox-row">
+        <input type="checkbox" id="bleedCheck">
+        <span class="checkbox-label">Rozpad (bleed)</span>
+        <span class="checkbox-badge" id="bleedBadge">wył.</span>
+      </label>
+      <div class="form-row hidden" id="bleedRow" style="padding-left:22px">
+        <span class="form-label">Margines</span>
+        <input type="number" class="form-input short" id="bleedMm" value="3" min="0" max="25" step="0.5">
+        <span class="form-unit">mm</span>
+      </div>
+      <div class="divider"></div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="cropCheck">
+        <span class="checkbox-label">Znaczniki cięcia</span>
+        <span class="checkbox-badge">crop marks</span>
+      </label>
+      <div class="divider"></div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="whiteBgCheck" checked>
+        <span class="checkbox-label">Białe tło pod treścią</span>
+        <span class="checkbox-badge">CMYK</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- METADATA -->
+  <div class="card collapsed">
+    <div class="card-header collapsible" id="metaHeader">
+      <span class="card-title">Metadane PDF</span>
+      <span class="collapse-icon">▼</span>
+    </div>
+    <div class="card-body card-body-collapsible">
+      <div class="form-row">
+        <span class="form-label">Tytuł</span>
+        <input type="text" class="form-input" id="metaTitle" placeholder="np. CV Łucja Nowak">
+      </div>
+      <div class="form-row">
+        <span class="form-label">Autor</span>
+        <input type="text" class="form-input" id="metaAuthor" placeholder="np. Łucja Nowak">
+      </div>
+      <div class="form-row">
+        <span class="form-label">Temat</span>
+        <input type="text" class="form-input" id="metaSubject" placeholder="np. Curriculum Vitae">
+      </div>
+    </div>
+  </div>
+
+  <!-- FILENAME -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Nazwa pliku</span></div>
+    <div class="card-body">
+      <div class="form-row">
+        <input type="text" class="form-input" id="filename" value="export" placeholder="nazwa bez rozszerzenia">
+        <span class="form-unit" id="fileExt">.pdf</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-card" id="resultsCard">
+    <div class="card-header" style="background:var(--success-bg);border:1px solid #A7F3D0;border-radius:8px 8px 0 0;padding:10px 14px;border-bottom:none">
+      <span class="card-title" style="color:var(--success)">✓ Gotowe — pobierz plik</span>
+    </div>
+    <div style="background:var(--success-bg);border:1px solid #A7F3D0;border-top:none;border-radius:0 0 8px 8px;padding:10px 12px">
+      <div id="resultsList"></div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<div class="footer">
+  <button class="btn btn-secondary" id="btnCancel">Anuluj</button>
+  <button class="btn btn-primary" id="btnExport" disabled>Eksportuj PDF</button>
+</div>
+</div><!-- /app -->
+
+<!-- PROGRESS OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="prog-title" id="progTitle">Eksportuję...</div>
+  <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
+  <div class="prog-sub" id="progSub"></div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let frames = [];
+const S = { mode: 'multi', profile: 'rgb', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false };
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+// ─── Mode toggle ──────────────────────────────────────────────────────────────
+document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', e => {
+  S.mode = e.target.value;
+  $('modeMultiCard').classList.toggle('active', S.mode === 'multi');
+  $('modeSepCard').classList.toggle('active', S.mode === 'separate');
+  $('fileExt').textContent = S.mode === 'separate' ? '.zip' : '.pdf';
+  updateBtn();
+}));
+
+// ─── Profile toggle ───────────────────────────────────────────────────────────
+document.querySelectorAll('input[name="profile"]').forEach(r => r.addEventListener('change', e => {
+  S.profile = e.target.value;
+  $('profileRGBCard').classList.toggle('active', S.profile === 'rgb');
+  $('profileCMYKCard').classList.toggle('active', S.profile === 'cmyk');
+  $('bannerRGB').classList.toggle('hidden', S.profile !== 'rgb');
+  $('bannerCMYK').classList.toggle('hidden', S.profile !== 'cmyk');
+  $('qualityCard').classList.toggle('hidden', S.profile !== 'cmyk');
+}));
+
+// ─── DPI pills ────────────────────────────────────────────────────────────────
+$('dpiGroup').addEventListener('click', e => {
+  const pill = e.target.closest('[data-scale]');
+  if (!pill) return;
+  S.scale = parseInt(pill.dataset.scale);
+  document.querySelectorAll('#dpiGroup .pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+});
+
+// ─── Collapsible cards ────────────────────────────────────────────────────────
+['printHeader', 'metaHeader'].forEach(hId => {
+  $(hId).addEventListener('click', function() {
+    const card = this.closest('.card');
+    card.classList.toggle('collapsed');
+    const body = card.querySelector('.card-body-collapsible');
+    if (body) body.style.display = card.classList.contains('collapsed') ? 'none' : '';
+  });
+});
+
+// ─── Print options ────────────────────────────────────────────────────────────
+$('bleedCheck').addEventListener('change', e => {
+  S.bleed = e.target.checked;
+  $('bleedRow').classList.toggle('hidden', !S.bleed);
+  $('bleedBadge').textContent = S.bleed ? S.bleedMm + ' mm' : 'wył.';
+});
+$('bleedMm').addEventListener('input', e => {
+  S.bleedMm = parseFloat(e.target.value) || 3;
+  $('bleedBadge').textContent = S.bleedMm + ' mm';
+});
+$('cropCheck').addEventListener('change', e => { S.cropMarks = e.target.checked; });
+$('whiteBgCheck').addEventListener('change', e => { S.whiteBg = e.target.checked; });
+$('inkLimit').addEventListener('input', e => {
+  const v = parseInt(e.target.value, 10);
+  S.inkLimit = isNaN(v) ? 320 : Math.min(400, Math.max(240, v));
+});
+$('pdfxCheck').addEventListener('change', e => {
+  S.pdfx = e.target.checked;
+  $('pdfxBadge').textContent = S.pdfx ? 'PDF/X' : 'wył.';
+});
+
+// ─── Frame list ───────────────────────────────────────────────────────────────
+$('selectAll').addEventListener('click', () => {
+  document.querySelectorAll('.frame-item').forEach(el => {
+    el.querySelector('input').checked = true;
+    el.classList.add('checked');
+  });
+  updateBtn();
+});
+$('deselectAll').addEventListener('click', () => {
+  document.querySelectorAll('.frame-item').forEach(el => {
+    el.querySelector('input').checked = false;
+    el.classList.remove('checked');
+  });
+  updateBtn();
+});
+
+function renderFrames() {
+  const list = $('frameList');
+  if (!frames.length) { list.innerHTML = '<div class="empty-state">Brak framów na tej stronie</div>'; return; }
+  list.innerHTML = '';
+  frames.forEach((f, i) => {
+    const el = document.createElement('div');
+    el.className = 'frame-item checked';
+    el.dataset.id = f.id;
+    el.innerHTML = `<input type="checkbox" checked><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
+    const cb = el.querySelector('input');
+    el.addEventListener('click', evt => {
+      if (evt.target === cb) return;
+      cb.checked = !cb.checked;
+      el.classList.toggle('checked', cb.checked);
+      updateBtn();
+    });
+    cb.addEventListener('change', () => { el.classList.toggle('checked', cb.checked); updateBtn(); });
+    list.appendChild(el);
+  });
+  $('frameCount').textContent = `${frames.length} frame${frames.length > 1 ? 'y' : ''}`;
+  updateBtn();
+}
+
+function getSelectedIds() {
+  return [...document.querySelectorAll('.frame-item.checked')].map(el => el.dataset.id);
+}
+
+function getSelectedFrames() {
+  const ids = new Set(getSelectedIds());
+  return frames.filter(f => ids.has(f.id));
+}
+
+function updateBtn() {
+  const n = getSelectedIds().length;
+  const btn = $('btnExport');
+  btn.disabled = n === 0;
+  if (n === 0) btn.textContent = 'Eksportuj PDF';
+  else if (S.mode === 'separate') btn.textContent = `Eksportuj ${n} plik${n > 1 ? 'i' : ''} → ZIP`;
+  else btn.textContent = `Eksportuj ${n} stron${n > 1 ? 'y' : 'ę'} → PDF`;
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ─── Export entry point ───────────────────────────────────────────────────────
+$('btnCancel').addEventListener('click', () => parent.postMessage({ pluginMessage: { type: 'close' } }, '*'));
+$('btnExport').addEventListener('click', () => {
+  const ids = getSelectedIds();
+  if (!ids.length) return;
+  exportErrors = [];
+  showProgress('Pobieranie z Figmy...', 0);
+  $('resultsCard').classList.remove('visible');
+  const format = S.profile === 'cmyk' ? 'PNG' : 'PDF';
+  parent.postMessage({ pluginMessage: { type: 'export', frameIds: ids, format, scale: S.scale } }, '*');
+});
+
+// ─── Messages from plugin ─────────────────────────────────────────────────────
+let exportErrors = [];
+window.onmessage = async evt => {
+  const msg = evt.data.pluginMessage;
+  if (!msg) return;
+  if (msg.type === 'init') { frames = msg.frames; renderFrames(); }
+  if (msg.type === 'progress') {
+    const pct = Math.round(msg.current / msg.total * 65);
+    showProgress(`Eksportuję ${msg.current}/${msg.total}`, pct, msg.name);
+  }
+  if (msg.type === 'exportError') {
+    exportErrors.push(`${msg.name}: ${msg.message}`);
+  }
+  if (msg.type === 'exportDone') {
+    if (!msg.data.length) {
+      hideProgress();
+      alert(exportErrors.length
+        ? 'Nie udało się wyeksportować żadnego frame\'u:\n\n' + exportErrors.join('\n')
+        : 'Brak danych do eksportu.');
+      exportErrors = [];
+      return;
+    }
+    showProgress('Przetwarzanie...', 70);
+    try { await handleExportDone(msg.data); }
+    catch (err) { hideProgress(); alert('Błąd eksportu: ' + err.message); }
+    if (exportErrors.length) {
+      alert('Część framów pominięto (błąd eksportu w Figmie):\n\n' + exportErrors.join('\n'));
+    }
+    exportErrors = [];
+  }
+};
+
+// ─── Handle export data ───────────────────────────────────────────────────────
+async function handleExportDone(data) {
+  const filename = $('filename').value.trim() || 'export';
+
+  if (S.profile === 'cmyk') {
+    if (S.mode === 'separate') {
+      const zip = new JSZip();
+      for (let i = 0; i < data.length; i++) {
+        showProgress(`CMYK ${i+1}/${data.length}`, 70 + Math.round(i/data.length*25), data[i].name);
+        const pdf = await buildCmykPdf([data[i]]);
+        zip.file(safeName(data[i].name) + '.pdf', pdf);
+      }
+      showProgress('Pakuję ZIP...', 96);
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, filename + '.zip');
+      showResults([{ name: filename + '.zip', size: blob.size, url }]);
+    } else {
+      showProgress('Konwersja CMYK...', 72, `${data.length} strony`);
+      const pdf = await buildCmykPdf(data);
+      const blob = new Blob([pdf], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, filename + '.pdf');
+      showResults([{ name: filename + '.pdf', size: pdf.length, url }]);
+    }
+  } else {
+    if (S.mode === 'separate') {
+      const zip = new JSZip();
+      for (let i = 0; i < data.length; i++) {
+        showProgress(`PDF ${i+1}/${data.length}`, 70 + Math.round(i/data.length*25), data[i].name);
+        const pdf = await buildSingleRgbPdf(new Uint8Array(data[i].bytes));
+        zip.file(safeName(data[i].name) + '.pdf', pdf);
+      }
+      showProgress('Pakuję ZIP...', 96);
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, filename + '.zip');
+      showResults([{ name: filename + '.zip', size: blob.size, url }]);
+    } else {
+      showProgress('Łączę strony...', 78);
+      const pdf = await buildMergedRgbPdf(data);
+      const blob = new Blob([pdf], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, filename + '.pdf');
+      showResults([{ name: filename + '.pdf', size: pdf.length, url }]);
+    }
+  }
+}
+
+function safeName(n) { return n.replace(/[^\w\s\-]/g, '_').trim(); }
+
+// ─── sRGB PDF (pdf-lib) ───────────────────────────────────────────────────────
+async function buildMergedRgbPdf(data) {
+  const { PDFDocument } = PDFLib;
+  const merged = await PDFDocument.create();
+  setMeta(merged);
+  for (const f of data) {
+    const src = await PDFDocument.load(new Uint8Array(f.bytes));
+    const pages = await merged.copyPages(src, [...Array(src.getPageCount()).keys()]);
+    pages.forEach(p => { merged.addPage(p); if (S.cropMarks || S.bleed) addCropMarksRgb(p); });
+  }
+  return merged.save();
+}
+
+async function buildSingleRgbPdf(bytes) {
+  const { PDFDocument } = PDFLib;
+  const src = await PDFDocument.load(bytes);
+  const doc = await PDFDocument.create();
+  setMeta(doc);
+  const pages = await doc.copyPages(src, [...Array(src.getPageCount()).keys()]);
+  pages.forEach(p => { doc.addPage(p); if (S.cropMarks || S.bleed) addCropMarksRgb(p); });
+  return doc.save();
+}
+
+function setMeta(doc) {
+  const t = $('metaTitle').value.trim();
+  const a = $('metaAuthor').value.trim();
+  const s = $('metaSubject').value.trim();
+  if (t) doc.setTitle(t); if (a) doc.setAuthor(a); if (s) doc.setSubject(s);
+  doc.setCreator('PDF Export Pro — Figma Plugin');
+}
+
+function addCropMarksRgb(page) {
+  // Artwork (the copied page) stays at trim coords (0,0)-(w,h). We enlarge the
+  // MediaBox outward by a margin so bleed and crop marks are never clipped, and
+  // tag the print boxes so a RIP knows where the trim and bleed are.
+  const { width: w, height: h } = page.getSize();
+  const MM = PDFCore.MM_TO_PT;
+  const gap = 5.67, len = 14.17;                 // ≈2mm gap, ≈5mm mark length
+  const bleedPt = S.bleed ? S.bleedMm * MM : 0;
+  const markReserve = S.cropMarks ? (Math.max(bleedPt, gap) + len + MM) : 0;
+  const m = Math.max(bleedPt, markReserve);      // trim → media margin
+
+  if (m > 0) page.setMediaBox(-m, -m, w + m * 2, h + m * 2);
+  if (typeof page.setTrimBox === 'function') page.setTrimBox(0, 0, w, h);
+  if (bleedPt > 0 && typeof page.setBleedBox === 'function') {
+    page.setBleedBox(-bleedPt, -bleedPt, w + bleedPt * 2, h + bleedPt * 2);
+  }
+
+  if (!S.cropMarks) return;
+  const off = bleedPt > 0 ? bleedPt : gap;       // marks start at the bleed edge
+  const ln = (x1, y1, x2, y2) => page.drawLine({
+    start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness: 0.5, color: PDFLib.rgb(0, 0, 0),
+  });
+  // bottom-left
+  ln(-off - len, 0, -off, 0);   ln(0, -off, 0, -off - len);
+  // bottom-right
+  ln(w + off, 0, w + off + len, 0);   ln(w, -off, w, -off - len);
+  // top-left
+  ln(-off - len, h, -off, h);   ln(0, h + off, 0, h + off + len);
+  // top-right
+  ln(w + off, h, w + off + len, h);   ln(w, h + off, w, h + off + len);
+}
+
+// ─── CMYK PDF builder ─────────────────────────────────────────────────────────
+async function buildCmykPdf(data) {
+  const pageSpecs = [];
+  for (let i = 0; i < data.length; i++) {
+    const f = data[i];
+    const { imgW, imgH, rgba } = await pngToRgba(new Uint8Array(f.bytes));
+    const cmyk = PDFCore.rgbaToCmyk(rgba, imgW, imgH, S.inkLimit);
+    const ptW = f.width * 0.75;
+    const ptH = f.height * 0.75;
+    const bleedPt = S.bleed ? S.bleedMm * PDFCore.MM_TO_PT : 0;
+    pageSpecs.push({ cmyk, imgW, imgH, ptW, ptH, bleedPt });
+  }
+  return PDFCore.assembleCmykPdf(pageSpecs, cmykOpts());
+}
+
+// Options shared by every CMYK page: crop marks, PDF/X intent, metadata.
+function cmykOpts() {
+  return {
+    cropMarks: S.cropMarks,
+    pdfx: S.pdfx,
+    // Only embed the (~650 KB) output profile when the user opted into PDF/X,
+    // so plain CMYK exports stay small.
+    iccProfile: S.pdfx ? (window.__ICC_CMYK__ || null) : null,
+    outputCondition: window.__ICC_CMYK_NAME__,
+    meta: {
+      title: $('metaTitle').value.trim(),
+      author: $('metaAuthor').value.trim(),
+      creator: 'PDF Export Pro',
+    },
+  };
+}
+
+async function pngToRgba(pngBytes) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(new Blob([pngBytes], { type: 'image/png' }));
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (S.whiteBg) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, img.width, img.height); }
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve({ imgW: img.width, imgH: img.height, rgba: ctx.getImageData(0, 0, img.width, img.height).data });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Błąd PNG')); };
+    img.src = url;
+  });
+}
+
+
+// ─── Progress / Results UI ────────────────────────────────────────────────────
+function showProgress(title, pct, sub = '') {
+  $('overlay').classList.add('visible');
+  $('progTitle').textContent = title;
+  $('progFill').style.width = pct + '%';
+  $('progSub').textContent = sub;
+}
+
+function hideProgress() { $('overlay').classList.remove('visible'); }
+
+function showResults(items) {
+  hideProgress();
+  const list = $('resultsList');
+  list.innerHTML = '';
+  items.forEach(({ name, size, url }) => {
+    const kb = size / 1024;
+    const sizeStr = kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(2)} MB`;
+    const el = document.createElement('div');
+    el.className = 'result-item';
+    el.innerHTML = `<span class="result-icon">📄</span><span class="result-name">${esc(name)}</span><span class="result-size">${sizeStr}</span>`;
+    if (url) { el.title = 'Kliknij, aby pobrać ponownie'; el.addEventListener('click', () => triggerDownload(url, name)); }
+    list.appendChild(el);
+  });
+  $('resultsCard').classList.add('visible');
+  updateBtn();
+}
+
+function triggerDownload(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+}
+</script>
+</body>
+</html>

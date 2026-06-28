@@ -1,8 +1,10 @@
 figma.showUI(__html__, { width: 400, height: 660, title: 'PDF Export Pro' });
 
+const EXPORTABLE = ['FRAME', 'COMPONENT', 'SECTION'];
+
 function getFrames() {
   return figma.currentPage.children
-    .filter(n => ['FRAME', 'COMPONENT', 'SECTION'].includes(n.type))
+    .filter(n => EXPORTABLE.includes(n.type))
     .map(n => ({
       id: n.id,
       name: n.name,
@@ -13,14 +15,25 @@ function getFrames() {
 
 figma.ui.postMessage({ type: 'init', frames: getFrames() });
 
+// Re-scan when the user switches/edits the page so the frame list stays fresh.
+figma.on('currentpagechange', () => {
+  figma.ui.postMessage({ type: 'init', frames: getFrames() });
+});
+
 figma.ui.onmessage = async (msg) => {
+  if (msg.type === 'refresh') {
+    figma.ui.postMessage({ type: 'init', frames: getFrames() });
+    return;
+  }
+
   if (msg.type === 'export') {
     const { frameIds, format, scale } = msg;
     const results = [];
 
     for (let i = 0; i < frameIds.length; i++) {
-      const node = figma.getNodeById(frameIds[i]);
-      if (!node) continue;
+      // dynamic-page documentAccess requires the async node getter.
+      const node = await figma.getNodeByIdAsync(frameIds[i]);
+      if (!node || typeof node.exportAsync !== 'function') continue;
 
       figma.ui.postMessage({
         type: 'progress',
@@ -33,16 +46,25 @@ figma.ui.onmessage = async (msg) => {
         ? { format: 'PNG', constraint: { type: 'SCALE', value: Math.min(scale || 3, 4) } }
         : { format: 'PDF' };
 
-      const bytes = await node.exportAsync(exportSettings);
-      results.push({
-        name: node.name,
-        bytes: Array.from(bytes),
-        width: node.width,
-        height: node.height,
-      });
+      try {
+        const bytes = await node.exportAsync(exportSettings);
+        results.push({
+          name: node.name,
+          bytes: Array.from(bytes),
+          width: node.width,
+          height: node.height,
+        });
+      } catch (err) {
+        figma.ui.postMessage({
+          type: 'exportError',
+          name: node.name,
+          message: String(err && err.message ? err.message : err),
+        });
+      }
     }
 
     figma.ui.postMessage({ type: 'exportDone', data: results });
+    return;
   }
 
   if (msg.type === 'close') figma.closePlugin();
