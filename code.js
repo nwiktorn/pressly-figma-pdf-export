@@ -1,4 +1,4 @@
-figma.showUI(__html__, { width: 400, height: 660, title: 'Pressly - PDF Export' });
+figma.showUI(__html__, { width: 900, height: 660, title: 'Pressly - PDF Export' });
 
 const EXPORTABLE = ['FRAME', 'COMPONENT', 'SECTION'];
 const SETTINGS_KEY = 'pressly-pdf-export-settings';

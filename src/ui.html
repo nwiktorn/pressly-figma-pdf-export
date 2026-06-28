@@ -10,324 +10,377 @@
 <!-- @INJECT:APP_MODULES -->
 <!-- @INJECT:ICC_PROFILE -->
 <style>
+@property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #F0F2F5;
-  --surface: #FFFFFF;
-  --surface2: #F8F9FB;
-  --border: #E2E8F0;
-  --text: #1A202C;
-  --text2: #64748B;
-  --text3: #94A3B8;
-  --accent: #2563EB;
-  --accent-bg: #DBEAFE;
-  --accent-hover: #1D4ED8;
-  --success: #059669;
-  --success-bg: #ECFDF5;
-  --radius: 8px;
-  --radius-sm: 5px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f3f4f9;
+  --fg: #15161c;
+  --muted: #5b5e6e;
+  --faint: #6e7284;
+  --border: #e7e8f0;
+  --border-2: #dddfeb;
+  --g1: #4285F4;
+  --g2: #9b72cb;
+  --g3: #d96570;
+  --g4: #3ec6c0;
+  --accent: #5b5bf0;
+  --accent-soft: #ececff;
+  --success: #0f9d6b;
+  --success-bg: #e9f9f1;
+  --warn: #b7791f;
+  --warn-bg: #fdf6e3;
+  --r: 14px;
+  --spin: 5.5s;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+  --mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
 }
 
-html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; font-size: 12px; color: var(--text); background: var(--bg); }
+html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var(--fg); background: var(--bg); -webkit-font-smoothing: antialiased; }
 
-.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+@keyframes spin { to { --angle: 360deg; } }
+@keyframes flow { to { background-position: 200% 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .logo, .opt.on::before, .cta::before, .spinner { animation: none !important; }
+}
 
-.content { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+/* ── app shell ── */
+.app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: var(--surface); }
 
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+/* ── topbar ── */
+.topbar { display: flex; align-items: center; gap: 11px; padding: 13px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.logo { width: 30px; height: 30px; border-radius: 9px; flex: none; position: relative; display: grid; place-items: center;
+  background: conic-gradient(from var(--angle), var(--g1),var(--g2),var(--g3),var(--g4),var(--g1));
+  animation: spin var(--spin) linear infinite; }
+.logo::after { content: ""; position: absolute; inset: 2px; border-radius: 7px; background: var(--surface); }
+.logo svg { position: relative; z-index: 1; width: 16px; height: 16px; }
+.brand { display: flex; flex-direction: column; line-height: 1.15; }
+.brand b { font-size: 13.5px; font-weight: 650; letter-spacing: -.01em; }
+.brand span { font-size: 11px; color: var(--faint); }
+.topbar-page { margin-left: auto; font-size: 11px; color: var(--faint); font-family: var(--mono); display: flex; align-items: center; gap: 6px; }
+.pgdot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex: none; }
 
-.card-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--border); }
-.card-header.collapsible { cursor: pointer; user-select: none; }
-.card-header.collapsible:hover { background: var(--surface2); }
+/* ── scroll + two-column layout ── */
+.scroll { flex: 1; overflow-y: auto; padding: 18px 20px 16px; }
+.scroll::-webkit-scrollbar { width: 8px; }
+.scroll::-webkit-scrollbar-thumb { background: #dfe1ec; border-radius: 8px; border: 2px solid var(--surface); }
+.cols { display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); gap: 16px; align-items: start; }
+.col-l { position: sticky; top: 0; }
+.colstack { display: flex; flex-direction: column; gap: 14px; }
 
-.card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2); }
+/* ── cards ── */
+.card { border: 1px solid var(--border); border-radius: var(--r); background: var(--surface); overflow: hidden; }
+.card-h { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.card-h .ttl { font-size: 12px; font-weight: 650; letter-spacing: .01em; }
+.card-h .meta { margin-left: auto; font-size: 11px; color: var(--faint); font-family: var(--mono); }
+.card-b { padding: 0 14px 14px; }
+.card-h.click { cursor: pointer; user-select: none; font: inherit; text-align: left; background: none; border: none; width: 100%; color: inherit; border-radius: var(--r); }
+.card-h.click:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.chev { margin-left: auto; color: var(--faint); transition: transform .22s ease; }
+.card.col .chev { transform: rotate(-90deg); }
+.card.col .card-b { display: none; }
 
-.card-body { padding: 10px 12px; }
+.eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
 
-.collapse-icon { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
-.collapsed .collapse-icon { transform: rotate(-90deg); }
-.collapsed .card-body-collapsible { display: none; }
+/* ── frame list ── */
+.frame-tools { display: flex; gap: 7px; margin-bottom: 10px; }
+.tiny { font: inherit; font-size: 11px; font-weight: 550; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; cursor: pointer; transition: .15s; }
+.tiny:hover { border-color: var(--border-2); color: var(--fg); }
+.tiny:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.frames { display: flex; flex-direction: column; gap: 4px; max-height: 430px; overflow-y: auto; padding-right: 2px; }
+.frames::-webkit-scrollbar { width: 8px; }
+.frames::-webkit-scrollbar-thumb { background: #dfe1ec; border-radius: 8px; border: 2px solid var(--surface); }
+.frow { display: flex; align-items: center; gap: 11px; padding: 8px 9px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: .14s; }
+.frow:hover { background: var(--surface-2); }
+.frow.checked { background: var(--accent-soft); border-color: #dcdcff; }
+.frow input { width: 16px; height: 16px; flex: none; accent-color: var(--accent); cursor: pointer; }
+.frame-thumb { width: 34px; height: 34px; border-radius: 7px; flex: none; border: 1px solid var(--border-2); background: repeating-conic-gradient(#eef0f7 0% 25%, #f7f8fc 0% 50%) 0/12px 12px center/contain no-repeat; }
+.frame-thumb.loaded { border-color: transparent; background-color: transparent; }
+.frame-name { flex: 1; font-size: 12.5px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame-dims { font-size: 11px; color: var(--faint); font-family: var(--mono); white-space: nowrap; }
+.empty-state { text-align: center; padding: 30px 16px; color: var(--faint); font-size: 12px; }
 
-.frame-controls { display: flex; gap: 6px; margin-bottom: 8px; }
+/* ── toggle (opt) cards ── */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.opt { position: relative; border: 1px solid var(--border); border-radius: 11px; padding: 11px 12px; cursor: pointer; transition: .16s; background: var(--surface); }
+.opt:hover { border-color: var(--border-2); }
+.opt .oh { display: flex; align-items: center; gap: 8px; position: relative; z-index: 1; }
+.opt .ic { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--surface-2); flex: none; color: var(--muted); }
+.opt .ic svg { width: 15px; height: 15px; }
+.opt b { font-size: 12.5px; font-weight: 600; }
+.opt p { font-size: 11px; color: var(--faint); margin-top: 5px; line-height: 1.35; position: relative; z-index: 1; }
+.opt .tick { position: absolute; top: 9px; right: 9px; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border-2); display: grid; place-items: center; transition: .16s; z-index: 2; }
+.opt .tick svg { width: 9px; height: 9px; opacity: 0; color: #fff; transform: scale(.5); transition: .16s; }
+.opt .sr-radio { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; margin: 0; pointer-events: none; }
+.opt:focus-within { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.opt.on { border-color: transparent; }
+.opt.on::before { content: ""; position: absolute; inset: -1.5px; border-radius: inherit; padding: 1.5px; z-index: 0;
+  background: conic-gradient(from var(--angle), var(--g1),var(--g2),var(--g3),var(--g4),var(--g1));
+  animation: spin var(--spin) linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.opt.on .ic { background: var(--accent-soft); color: var(--accent); }
+.opt.on .tick { border-color: var(--accent); background: var(--accent); }
+.opt.on .tick svg { opacity: 1; transform: scale(1); }
 
-.btn-tiny { font-size: 11px; padding: 3px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text2); cursor: pointer; font-family: inherit; transition: all 0.15s; }
-.btn-tiny:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+/* ── banners ── */
+.banner { display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; line-height: 1.45; border-radius: 10px; padding: 10px 12px; margin-top: 11px; }
+.banner svg { width: 15px; height: 15px; flex: none; margin-top: 1px; }
+.banner.info { background: #eef3ff; color: #2c4a8f; }
+.banner.warn { background: var(--warn-bg); color: var(--warn); }
 
-.frame-list { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; max-height: 130px; overflow-y: auto; }
+/* ── pills (DPI) ── */
+.pills { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.pill { font: inherit; text-align: center; border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; cursor: pointer; background: var(--surface); transition: .14s; line-height: 1.25; }
+.pill:hover { border-color: var(--border-2); }
+.pill b { font-size: 13px; font-weight: 650; font-family: var(--mono); display: block; }
+.pill span { display: block; font-size: 9.5px; color: var(--faint); margin-top: 2px; }
+.pill.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.pill.on span { color: var(--accent); }
+.pill:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.dpi-readout { font-size: 11px; color: var(--muted); font-family: var(--mono); background: var(--surface-2); border-radius: 8px; padding: 7px 10px; margin-top: 9px; }
+.dpi-readout b { color: var(--fg); }
 
-.frame-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; user-select: none; }
-.frame-item:last-child { border-bottom: none; }
-.frame-item:hover { background: var(--surface2); }
-.frame-item.checked { background: #F0F7FF; }
+/* ── form rows ── */
+.row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.row .lbl { font-size: 12.5px; color: var(--muted); flex: 1; }
+.form-input { font: inherit; font-size: 12.5px; border: 1px solid var(--border-2); border-radius: 8px; padding: 7px 9px; background: var(--surface); color: var(--fg); transition: .14s; width: 100%; }
+.form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.form-input.short { width: 78px; flex: none; text-align: right; }
+.form-unit { font-size: 11.5px; color: var(--faint); font-family: var(--mono); }
+input[type=range] { accent-color: var(--accent); }
 
-.frame-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-.dpi-readout { margin-top: 10px; padding: 8px 10px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); font-size: 11px; line-height: 1.5; color: var(--text); }
-.dpi-readout .dpi-big { font-weight: 700; }
-.dpi-readout .dpi-dim { color: var(--text3); }
-.frame-thumb { width: 28px; height: 28px; flex-shrink: 0; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2) center/contain no-repeat; }
-.frame-thumb.loaded { border-color: transparent; }
-.frame-name { flex: 1; font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.frame-dims { font-size: 10px; color: var(--text3); white-space: nowrap; }
+/* ── checkboxes ── */
+.check { display: flex; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.check .lbl { font-size: 12.5px; flex: 1; }
+.badge { font-size: 9.5px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: var(--faint); background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px; }
+.badge.act { color: var(--accent); background: var(--accent-soft); border-color: #dcdcff; }
 
-.toggle-group { display: flex; gap: 6px; }
+/* ── misc ── */
+.divider { height: 1px; background: var(--border); margin: 10px 0; }
+.file-wrap { display: flex; gap: 8px; align-items: center; }
+.file-wrap .form-input { flex: 1; }
+.ext { font-family: var(--mono); font-size: 12px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; flex: none; }
+.tokens { font-size: 10.5px; color: var(--faint); margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.tokens code { font-family: var(--mono); font-size: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 5px; color: var(--muted); }
 
-.toggle-card { flex: 1; border: 2px solid var(--border); border-radius: var(--radius); padding: 8px 10px; cursor: pointer; transition: all 0.15s; background: var(--surface); user-select: none; }
-.toggle-card:hover { border-color: #93C5FD; background: #F8FBFF; }
-.toggle-card.active { border-color: var(--accent); background: var(--accent-bg); }
-.toggle-card input[type="radio"] { display: none; }
-.toggle-icon { font-size: 14px; margin-bottom: 2px; }
-.toggle-label { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
-.toggle-desc { font-size: 10px; color: var(--text2); line-height: 1.3; }
-.toggle-card.active .toggle-label { color: var(--accent); }
+/* ── footer ── */
+.footer { display: flex; gap: 10px; padding: 13px 20px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.footer .spacer { flex: 1; }
+.btn { font: inherit; font-size: 13px; font-weight: 600; border-radius: 11px; padding: 11px 16px; cursor: pointer; border: 1px solid transparent; transition: .15s; }
+.btn-ghost { background: var(--surface); border-color: var(--border-2); color: var(--muted); }
+.btn-ghost:hover { color: var(--fg); border-color: var(--faint); }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 
-.info-banner { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 11px; line-height: 1.4; margin-top: 8px; }
-.info-blue { background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
-.info-yellow { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
-.banner-icon { flex-shrink: 0; }
+/* ── CTA button ── */
+.cta { position: relative; border-radius: 12px; }
+.cta::before { content: ""; position: absolute; inset: -1.5px; border-radius: inherit; padding: 1.5px; z-index: 0;
+  background: conic-gradient(from var(--angle), var(--g1),var(--g2),var(--g3),var(--g4),var(--g1));
+  animation: spin var(--spin) linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.cta button { position: relative; z-index: 1; width: 100%; font: inherit; font-size: 13.5px; font-weight: 650; color: var(--fg); background: var(--surface);
+  border: none; border-radius: 11px; padding: 11px 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.cta button:hover { background: #fbfbff; }
+.cta button svg { width: 16px; height: 16px; }
+.cta.dis { opacity: .5; pointer-events: none; filter: grayscale(.4); }
+.cta:focus-within { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-radius: 12px; }
 
-.pill-group { display: flex; gap: 4px; flex-wrap: wrap; }
-.pill { padding: 5px 12px; border-radius: 100px; border: 1.5px solid var(--border); font-size: 11px; font-weight: 500; color: var(--text2); cursor: pointer; background: var(--surface); transition: all 0.15s; font-family: inherit; line-height: 1.4; text-align: center; }
-.pill:hover { border-color: var(--accent); color: var(--accent); }
-.pill.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
-
-.form-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
-.form-label { font-size: 11px; color: var(--text2); min-width: 75px; flex-shrink: 0; }
-.form-input { flex: 1; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 5px 8px; font-size: 12px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
-.form-input:focus { border-color: var(--accent); }
-.form-input.short { width: 64px; flex: 0 0 auto; }
-.form-unit { font-size: 11px; color: var(--text2); flex-shrink: 0; }
-
-.checkbox-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; user-select: none; }
-.checkbox-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
-.checkbox-label { font-size: 12px; color: var(--text); flex: 1; }
-.checkbox-badge { font-size: 10px; color: var(--text3); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
-
-.divider { height: 1px; background: var(--border); margin: 4px 0; }
-
-.footer { padding: 8px 10px; border-top: 1.5px solid var(--border); background: var(--surface); display: flex; gap: 8px; flex-shrink: 0; }
-
-.btn { flex: 1; padding: 9px 16px; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; }
-.btn-secondary { background: var(--surface2); border: 1.5px solid var(--border); color: var(--text2); }
-.btn-secondary:hover { background: var(--border); color: var(--text); }
-.btn-primary { background: var(--accent); color: #fff; border: 1.5px solid transparent; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-primary:disabled { background: #BFDBFE; color: #93C5FD; cursor: not-allowed; }
-
-.overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.96); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; z-index: 100; }
+/* ── overlay ── */
+.overlay { position: absolute; inset: 0; background: rgba(255,255,255,.86); backdrop-filter: blur(6px);
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 20; padding: 40px; }
 .overlay.visible { display: flex; }
-.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.prog-title { font-size: 14px; font-weight: 600; color: var(--text); text-align: center; }
-.prog-bar-bg { width: 220px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.prog-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; width: 0%; }
-.prog-sub { font-size: 11px; color: var(--text2); text-align: center; max-width: 260px; }
+.spinner { width: 54px; height: 54px; border-radius: 50%; position: relative;
+  background: conic-gradient(from var(--angle), var(--g1),var(--g2),var(--g3),var(--g4),var(--g1));
+  animation: spin 1.1s linear infinite; }
+.spinner::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--surface); }
+.prog-title { font-size: 14px; font-weight: 650; color: var(--fg); }
+.prog-bar-bg { width: 260px; height: 7px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.prog-bar-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg,var(--g1),var(--g2),var(--g3)); transition: width .3s ease; }
+.prog-sub { font-size: 11.5px; color: var(--faint); font-family: var(--mono); }
 
-.results-card { display: none; }
-.results-card.visible { display: block; }
+/* ── results ── */
+.results-card { display: none; margin-top: 14px; border: 1px solid #b7ecd2; border-radius: var(--r); overflow: hidden; }
+.results-card.visible { display: block; animation: rise .3s ease; }
+.results-card .rh { display: flex; align-items: center; gap: 8px; background: var(--success-bg); padding: 11px 14px; font-size: 12.5px; font-weight: 650; color: var(--success); }
+.results-card .rh svg { width: 16px; height: 16px; flex: none; }
+.results-card .rb { padding: 10px 14px; display: flex; flex-direction: column; gap: 7px; }
+.result-item { display: flex; align-items: center; gap: 9px; font-size: 12px; cursor: pointer; }
+.result-item svg { width: 15px; height: 15px; color: var(--success); flex: none; }
+.result-name { font-family: var(--mono); font-size: 11.5px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fg); }
+.result-size { font-size: 11px; font-weight: 600; color: var(--accent); }
 
-.result-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--success-bg); border: 1px solid #A7F3D0; border-radius: var(--radius-sm); cursor: pointer; margin-bottom: 4px; transition: background 0.1s; }
-.result-item:hover { background: #D1FAE5; }
-.result-icon { font-size: 15px; flex-shrink: 0; }
-.result-name { flex: 1; font-size: 11px; font-weight: 500; color: #065F46; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.result-size { font-size: 10px; color: var(--text2); flex-shrink: 0; }
-
-.empty-state { text-align: center; padding: 20px; color: var(--text3); font-size: 12px; }
 .hidden { display: none !important; }
-::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: #dfe1ec; border-radius: 8px; border: 2px solid var(--surface); }
 </style>
 </head>
 <body>
 <div class="app">
-<div class="content" id="mainContent">
 
-  <!-- FRAMES -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Framy</span>
-      <span id="frameCount" style="font-size:11px;color:var(--text3)"></span>
-    </div>
-    <div class="card-body">
-      <div class="frame-controls">
-        <button class="btn-tiny" id="selectAll">Zaznacz wszystkie</button>
-        <button class="btn-tiny" id="deselectAll">Odznacz wszystkie</button>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#5b5bf0" stroke-width="1.6"/><path d="M13 3v5h5" stroke="#5b5bf0" stroke-width="1.6"/><text x="12" y="17.5" font-size="6.5" font-weight="700" fill="#5b5bf0" text-anchor="middle" font-family="sans-serif">PDF</text></svg>
+  </div>
+  <div class="brand"><b>Pressly PDF Export</b><span>Eksport gotowy do druku</span></div>
+  <div class="topbar-page"><span class="pgdot"></span><span id="pageLabel">Figma</span></div>
+</div>
+
+<div class="scroll">
+<div class="cols">
+
+  <!-- LEFT: FRAMES -->
+  <div class="col-l">
+    <div class="card">
+      <div class="card-h">
+        <span class="ttl">Framy</span>
+        <span class="meta" id="frameCount"></span>
       </div>
-      <div class="frame-list" id="frameList">
-        <div class="empty-state">Ładowanie framów...</div>
+      <div class="card-b">
+        <div class="frame-tools">
+          <button class="tiny" id="selectAll">Zaznacz wszystkie</button>
+          <button class="tiny" id="deselectAll">Odznacz wszystkie</button>
+        </div>
+        <div class="frames" id="frameList">
+          <div class="empty-state">Ładowanie framów…</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- EXPORT MODE + COLOR PROFILE (one card, 2×2 grid) -->
+  <!-- RIGHT: SETTINGS STACK -->
+  <div class="colstack">
+
+  <!-- EXPORT SETTINGS -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Ustawienia eksportu</span></div>
-    <div class="card-body">
-      <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Tryb</div>
-      <div class="toggle-group" style="margin-bottom:10px">
-        <label class="toggle-card active" id="modeMultiCard">
-          <input type="radio" name="mode" value="multi" checked>
-          <div class="toggle-icon">📄</div>
-          <div class="toggle-label">Jeden PDF</div>
-          <div class="toggle-desc">Wielostronicowy plik</div>
+    <div class="card-h"><span class="ttl">Ustawienia eksportu</span></div>
+    <div class="card-b">
+      <div class="eyebrow" id="modeLbl">Tryb</div>
+      <div class="seg" id="modeSeg" role="radiogroup" aria-labelledby="modeLbl">
+        <label class="opt on" id="modeMultiCard">
+          <input type="radio" class="sr-radio" name="mode" value="multi" checked>
+          <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>Jeden PDF</b></span>
+          <p>Wielostronicowy plik</p>
         </label>
-        <label class="toggle-card" id="modeSepCard">
-          <input type="radio" name="mode" value="separate">
-          <div class="toggle-icon">🗂️</div>
-          <div class="toggle-label">Osobne pliki</div>
-          <div class="toggle-desc">Każdy frame → ZIP</div>
-        </label>
-      </div>
-      <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Profil koloru</div>
-      <div class="toggle-group">
-        <label class="toggle-card active" id="profileRGBCard">
-          <input type="radio" name="profile" value="rgb" checked>
-          <div class="toggle-icon">🖥️</div>
-          <div class="toggle-label">sRGB — Wektor</div>
-          <div class="toggle-desc">Tekst zaznaczalny, fonty osadzone</div>
-        </label>
-        <label class="toggle-card" id="profileCMYKCard">
-          <input type="radio" name="profile" value="cmyk">
-          <div class="toggle-icon">🖨️</div>
-          <div class="toggle-label">CMYK — Druk</div>
-          <div class="toggle-desc">Raster RGB→CMYK, do offsetu</div>
+        <label class="opt" id="modeSepCard">
+          <input type="radio" class="sr-radio" name="mode" value="separate">
+          <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="1.6"/></svg></span><b>Osobne pliki</b></span>
+          <p>Każdy frame → ZIP</p>
         </label>
       </div>
-      <div class="info-banner info-blue" id="bannerRGB" style="margin-top:8px">
-        <span class="banner-icon">ℹ️</span>
+
+      <div class="divider"></div>
+      <div class="eyebrow" id="profLbl">Profil koloru</div>
+      <div class="seg" id="profSeg" role="radiogroup" aria-labelledby="profLbl">
+        <label class="opt on" id="profileRGBCard">
+          <input type="radio" class="sr-radio" name="profile" value="rgb" checked>
+          <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>sRGB — Wektor</b></span>
+          <p>Tekst zaznaczalny, fonty osadzone</p>
+        </label>
+        <label class="opt" id="profileCMYKCard">
+          <input type="radio" class="sr-radio" name="profile" value="cmyk">
+          <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9V5h12v4M6 18H4v-7h16v7h-2M8 14h8v6H8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span><b>CMYK — Druk</b></span>
+          <p>Raster RGB→CMYK, do offsetu</p>
+        </label>
+      </div>
+
+      <div class="banner info" id="bannerRGB">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <span>Wektor — tekst zaznaczalny, <b>niezależny od DPI</b>. Idealny do maila i ekranu.</span>
       </div>
-      <div class="info-banner info-yellow hidden" id="bannerCMYK" style="margin-top:8px">
-        <span class="banner-icon">⚠️</span>
+      <div class="banner warn hidden" id="bannerCMYK">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <span><b>CMYK raster</b> — tekst nie będzie zaznaczalny. Przeznaczony do drukarni offsetowych.</span>
       </div>
       <!-- QUALITY (CMYK only, inline) -->
-      <div class="hidden" id="qualityCard" style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
-        <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Jakość eksportu</div>
-        <div class="pill-group" id="dpiGroup">
-          <button class="pill" data-scale="2">192 DPI<br><span style="font-size:9px;opacity:.65">ekran / web</span></button>
-          <button class="pill active" data-scale="3">288 DPI<br><span style="font-size:9px;opacity:.65">druk standard</span></button>
-          <button class="pill" data-scale="4">384 DPI<br><span style="font-size:9px;opacity:.65">offset / max</span></button>
+      <div class="hidden" id="qualityCard" style="margin-top:0;border-top:1px solid var(--border);padding:12px 0 0">
+        <div class="eyebrow" style="margin-bottom:8px">Jakość eksportu</div>
+        <div class="pills" id="dpiGroup">
+          <button class="pill" data-scale="2"><b>192</b><span>ekran / web</span></button>
+          <button class="pill on" data-scale="3"><b>288</b><span>druk standard</span></button>
+          <button class="pill" data-scale="4"><b>384</b><span>offset / max</span></button>
         </div>
-        <div class="dpi-readout" id="dpiReadout" style="margin-top:8px"></div>
-        <div class="divider" style="margin-top:8px"></div>
-        <div class="form-row">
-          <span class="form-label">Limit farby</span>
-          <input type="number" class="form-input short" id="inkLimit" value="320" min="240" max="400" step="10">
-          <span class="form-unit">%</span>
-        </div>
+        <div class="dpi-readout" id="dpiReadout"></div>
         <div class="divider"></div>
-        <div class="form-row">
-          <span class="form-label">Kompresja</span>
-          <select class="form-input" id="compression">
-            <option value="flate">Bezstratna (większy plik)</option>
-            <option value="jpeg">JPEG (mniejszy plik)</option>
-          </select>
-        </div>
-        <div class="form-row hidden" id="jpegQualityRow">
-          <span class="form-label">Jakość JPEG</span>
-          <input type="range" id="jpegQuality" min="40" max="98" step="1" value="85" style="flex:1">
-          <span class="form-unit" id="jpegQualityVal">85</span>
-        </div>
+        <div class="row"><span class="lbl">Limit farby</span><input type="number" class="form-input short" id="inkLimit" value="320" min="240" max="400" step="10" aria-label="Limit farby w procentach"><span class="form-unit">%</span></div>
+        <div class="row"><span class="lbl">Kompresja</span><select class="form-input" id="compression" style="width:220px"><option value="flate">Bezstratna (większy plik)</option><option value="jpeg">JPEG (mniejszy plik)</option></select></div>
+        <div class="row hidden" id="jpegQualityRow"><span class="lbl">Jakość JPEG</span><input type="range" id="jpegQuality" min="40" max="98" step="1" value="85" style="flex:1" aria-label="Jakość JPEG"><span class="form-unit" id="jpegQualityVal">85</span></div>
         <div class="divider"></div>
-        <label class="checkbox-row">
-          <input type="checkbox" id="pdfxCheck">
-          <span class="checkbox-label">PDF/X-1a (OutputIntent)</span>
-          <span class="checkbox-badge" id="pdfxBadge">wył.</span>
-        </label>
+        <label class="check"><input type="checkbox" id="pdfxCheck"><span class="lbl">PDF/X-1a (OutputIntent FOGRA39)</span><span class="badge" id="pdfxBadge">wył.</span></label>
       </div>
     </div>
-  </div>
   </div>
 
   <!-- PRINT OPTIONS -->
-  <div class="card collapsed" id="printCard">
-    <div class="card-header collapsible" id="printHeader">
-      <span class="card-title">Opcje druku</span>
-      <span class="collapse-icon">▼</span>
-    </div>
-    <div class="card-body card-body-collapsible">
-      <label class="checkbox-row">
-        <input type="checkbox" id="bleedCheck">
-        <span class="checkbox-label">Rozpad (bleed)</span>
-        <span class="checkbox-badge" id="bleedBadge">wył.</span>
-      </label>
-      <div class="form-row hidden" id="bleedRow" style="padding-left:22px">
-        <span class="form-label">Margines</span>
-        <input type="number" class="form-input short" id="bleedMm" value="3" min="0" max="25" step="0.5">
-        <span class="form-unit">mm</span>
-      </div>
+  <div class="card" id="printCard">
+    <button type="button" class="card-h click" id="printHeader" aria-expanded="true" aria-controls="printBody">
+      <span class="ttl">Opcje druku</span>
+      <span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <div class="card-b" id="printBody">
+      <label class="check"><input type="checkbox" id="bleedCheck"><span class="lbl">Rozpad (bleed)</span><span class="badge" id="bleedBadge">wył.</span></label>
+      <div class="row hidden" id="bleedRow" style="padding-left:26px"><span class="lbl">Margines</span><input type="number" class="form-input short" id="bleedMm" value="3" min="0" max="25" step="0.5" aria-label="Margines spadu w milimetrach"><span class="form-unit">mm</span></div>
       <div class="divider"></div>
-      <label class="checkbox-row">
-        <input type="checkbox" id="cropCheck">
-        <span class="checkbox-label">Znaczniki cięcia</span>
-        <span class="checkbox-badge">crop marks</span>
-      </label>
+      <label class="check"><input type="checkbox" id="cropCheck"><span class="lbl">Znaczniki cięcia</span><span class="badge">crop marks</span></label>
       <div class="divider"></div>
-      <label class="checkbox-row">
-        <input type="checkbox" id="whiteBgCheck" checked>
-        <span class="checkbox-label">Białe tło pod treścią</span>
-        <span class="checkbox-badge">CMYK</span>
-      </label>
+      <label class="check"><input type="checkbox" id="whiteBgCheck" checked><span class="lbl">Białe tło pod treścią</span><span class="badge">CMYK</span></label>
     </div>
   </div>
 
   <!-- METADATA -->
-  <div class="card collapsed">
-    <div class="card-header collapsible" id="metaHeader">
-      <span class="card-title">Metadane PDF</span>
-      <span class="collapse-icon">▼</span>
-    </div>
-    <div class="card-body card-body-collapsible">
-      <div class="form-row">
-        <span class="form-label">Tytuł</span>
-        <input type="text" class="form-input" id="metaTitle" placeholder="np. CV Łucja Nowak">
-      </div>
-      <div class="form-row">
-        <span class="form-label">Autor</span>
-        <input type="text" class="form-input" id="metaAuthor" placeholder="np. Łucja Nowak">
-      </div>
-      <div class="form-row">
-        <span class="form-label">Temat</span>
-        <input type="text" class="form-input" id="metaSubject" placeholder="np. Curriculum Vitae">
-      </div>
+  <div class="card col">
+    <button type="button" class="card-h click" id="metaHeader" aria-expanded="false" aria-controls="metaBody">
+      <span class="ttl">Metadane PDF</span>
+      <span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <div class="card-b" id="metaBody">
+      <div class="row"><span class="lbl" style="flex:none;width:54px">Tytuł</span><input class="form-input" id="metaTitle" placeholder="np. CV Łucja Nowak" aria-label="Tytuł dokumentu PDF"></div>
+      <div class="row"><span class="lbl" style="flex:none;width:54px">Autor</span><input class="form-input" id="metaAuthor" placeholder="np. Łucja Nowak" aria-label="Autor dokumentu PDF"></div>
+      <div class="row"><span class="lbl" style="flex:none;width:54px">Temat</span><input class="form-input" id="metaSubject" placeholder="np. Curriculum Vitae" aria-label="Temat dokumentu PDF"></div>
     </div>
   </div>
 
   <!-- FILENAME -->
   <div class="card">
-    <div class="card-header"><span class="card-title">Nazwa pliku</span></div>
-    <div class="card-body">
-      <div class="form-row">
-        <input type="text" class="form-input" id="filename" value="export" placeholder="nazwa bez rozszerzenia">
-        <span class="form-unit" id="fileExt">.pdf</span>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:6px">Tokeny: <code>{name}</code> <code>{index}</code> <code>{date}</code> <code>{time}</code> <code>{w}</code> <code>{h}</code></div>
+    <div class="card-h"><span class="ttl">Nazwa pliku</span></div>
+    <div class="card-b">
+      <div class="file-wrap"><input class="form-input" id="filename" value="export" placeholder="nazwa bez rozszerzenia" aria-label="Nazwa pliku"><span class="ext" id="fileExt">.pdf</span></div>
+      <div class="tokens">Tokeny: <code>{name}</code><code>{index}</code><code>{date}</code><code>{time}</code><code>{w}</code><code>{h}</code></div>
     </div>
   </div>
 
   <!-- RESULTS -->
   <div class="results-card" id="resultsCard">
-    <div class="card-header" style="background:var(--success-bg);border:1px solid #A7F3D0;border-radius:8px 8px 0 0;padding:10px 14px;border-bottom:none">
-      <span class="card-title" style="color:var(--success)">✓ Gotowe — pobierz plik</span>
-    </div>
-    <div style="background:var(--success-bg);border:1px solid #A7F3D0;border-top:none;border-radius:0 0 8px 8px;padding:10px 12px">
-      <div id="resultsList"></div>
-    </div>
+    <div class="rh"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Gotowe — pobierz plik</div>
+    <div class="rb" id="resultsList"></div>
   </div>
 
-</div><!-- /content -->
+</div><!-- /colstack -->
+</div><!-- /cols -->
+</div><!-- /scroll -->
 
 <div class="footer">
-  <button class="btn btn-secondary" id="btnCancel">Anuluj</button>
-  <button class="btn btn-primary" id="btnExport" disabled>Eksportuj PDF</button>
+  <button class="btn btn-ghost" id="btnCancel">Anuluj</button>
+  <span class="spacer"></span>
+  <div class="cta dis" id="ctaWrap">
+    <button id="btnExport"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="btnExportLbl">Eksportuj PDF</span></button>
+  </div>
 </div>
+
 </div><!-- /app -->
 
 <!-- PROGRESS OVERLAY -->
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
-  <div class="prog-title" id="progTitle">Eksportuję...</div>
+  <div class="prog-title" id="progTitle">Eksportuję…</div>
   <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
   <div class="prog-sub" id="progSub"></div>
 </div>
@@ -343,8 +396,8 @@ const $ = id => document.getElementById(id);
 // ─── Mode toggle ──────────────────────────────────────────────────────────────
 document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', e => {
   S.mode = e.target.value;
-  $('modeMultiCard').classList.toggle('active', S.mode === 'multi');
-  $('modeSepCard').classList.toggle('active', S.mode === 'separate');
+  $('modeMultiCard').classList.toggle('on', S.mode === 'multi');
+  $('modeSepCard').classList.toggle('on', S.mode === 'separate');
   $('fileExt').textContent = S.mode === 'separate' ? '.zip' : '.pdf';
   updateBtn();
 }));
@@ -352,8 +405,8 @@ document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener(
 // ─── Profile toggle ───────────────────────────────────────────────────────────
 document.querySelectorAll('input[name="profile"]').forEach(r => r.addEventListener('change', e => {
   S.profile = e.target.value;
-  $('profileRGBCard').classList.toggle('active', S.profile === 'rgb');
-  $('profileCMYKCard').classList.toggle('active', S.profile === 'cmyk');
+  $('profileRGBCard').classList.toggle('on', S.profile === 'rgb');
+  $('profileCMYKCard').classList.toggle('on', S.profile === 'cmyk');
   $('bannerRGB').classList.toggle('hidden', S.profile !== 'rgb');
   $('bannerCMYK').classList.toggle('hidden', S.profile !== 'cmyk');
   $('qualityCard').classList.toggle('hidden', S.profile !== 'cmyk');
@@ -364,8 +417,8 @@ $('dpiGroup').addEventListener('click', e => {
   const pill = e.target.closest('[data-scale]');
   if (!pill) return;
   S.scale = parseInt(pill.dataset.scale);
-  document.querySelectorAll('#dpiGroup .pill').forEach(p => p.classList.remove('active'));
-  pill.classList.add('active');
+  document.querySelectorAll('#dpiGroup .pill').forEach(p => p.classList.remove('on'));
+  pill.classList.add('on');
   updateDpiReadout();
 });
 
@@ -373,9 +426,8 @@ $('dpiGroup').addEventListener('click', e => {
 ['printHeader', 'metaHeader'].forEach(hId => {
   $(hId).addEventListener('click', function() {
     const card = this.closest('.card');
-    card.classList.toggle('collapsed');
-    const body = card.querySelector('.card-body-collapsible');
-    if (body) body.style.display = card.classList.contains('collapsed') ? 'none' : '';
+    const collapsed = card.classList.toggle('col');
+    this.setAttribute('aria-expanded', String(!collapsed));
   });
 });
 
@@ -410,14 +462,14 @@ $('jpegQuality').addEventListener('input', e => {
 
 // ─── Frame list ───────────────────────────────────────────────────────────────
 $('selectAll').addEventListener('click', () => {
-  document.querySelectorAll('.frame-item').forEach(el => {
+  document.querySelectorAll('.frow').forEach(el => {
     el.querySelector('input').checked = true;
     el.classList.add('checked');
   });
   updateBtn();
 });
 $('deselectAll').addEventListener('click', () => {
-  document.querySelectorAll('.frame-item').forEach(el => {
+  document.querySelectorAll('.frow').forEach(el => {
     el.querySelector('input').checked = false;
     el.classList.remove('checked');
   });
@@ -428,18 +480,12 @@ function renderFrames() {
   const list = $('frameList');
   if (!frames.length) { list.innerHTML = '<div class="empty-state">Brak framów na tej stronie</div>'; return; }
   list.innerHTML = '';
-  frames.forEach((f, i) => {
-    const el = document.createElement('div');
-    el.className = 'frame-item checked';
+  frames.forEach(f => {
+    const el = document.createElement('label');
+    el.className = 'frow checked';
     el.dataset.id = f.id;
-    el.innerHTML = `<input type="checkbox" checked><span class="frame-thumb" data-thumb="${f.id}"></span><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
+    el.innerHTML = `<input type="checkbox" checked><span class="frame-thumb" data-thumb="${f.id}" style="background-size:contain;background-position:center;background-repeat:no-repeat"></span><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
     const cb = el.querySelector('input');
-    el.addEventListener('click', evt => {
-      if (evt.target === cb) return;
-      cb.checked = !cb.checked;
-      el.classList.toggle('checked', cb.checked);
-      updateBtn();
-    });
     cb.addEventListener('change', () => { el.classList.toggle('checked', cb.checked); updateBtn(); });
     list.appendChild(el);
   });
@@ -448,7 +494,7 @@ function renderFrames() {
 }
 
 function getSelectedIds() {
-  return [...document.querySelectorAll('.frame-item.checked')].map(el => el.dataset.id);
+  return [...document.querySelectorAll('.frow.checked')].map(el => el.dataset.id);
 }
 
 function getSelectedFrames() {
@@ -458,11 +504,11 @@ function getSelectedFrames() {
 
 function updateBtn() {
   const n = getSelectedIds().length;
-  const btn = $('btnExport');
-  btn.disabled = n === 0;
-  if (n === 0) btn.textContent = 'Eksportuj PDF';
-  else if (S.mode === 'separate') btn.textContent = `Eksportuj ${n} plik${n > 1 ? 'i' : ''} → ZIP`;
-  else btn.textContent = `Eksportuj ${n} stron${n > 1 ? 'y' : 'ę'} → PDF`;
+  $('ctaWrap').classList.toggle('dis', n === 0);
+  const lbl = n === 0 ? 'Eksportuj PDF'
+    : S.mode === 'separate' ? `Eksportuj ${n} plik${n > 1 ? 'i' : ''} → ZIP`
+    : `Eksportuj ${n} stron${n > 1 ? 'y' : 'ę'} → PDF`;
+  $('btnExportLbl').textContent = lbl;
   updateDpiReadout();
 }
 
@@ -812,7 +858,7 @@ function showResults(items) {
     const sizeStr = kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(2)} MB`;
     const el = document.createElement('div');
     el.className = 'result-item';
-    el.innerHTML = `<span class="result-icon">📄</span><span class="result-name">${esc(name)}</span><span class="result-size">${sizeStr}</span>`;
+    el.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l4 4v14H7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="result-name">${esc(name)}</span><span class="result-size">${sizeStr}</span>`;
     if (url) { el.title = 'Kliknij, aby pobrać ponownie'; el.addEventListener('click', () => triggerDownload(url, name)); }
     list.appendChild(el);
   });

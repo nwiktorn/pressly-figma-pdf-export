@@ -138,6 +138,19 @@ All UI state is the `S` object in `src/ui.html`.
 - **Filename templates**: `{name} {index} {date} {time} {w} {h}`; auto per-file
   index in ZIP mode (`applyTemplate`).
 
+### Aurora UI (src/ui.html)
+- **Two-column layout** (900 px): left column sticky frame list, right column settings stack.
+- **Topbar**: animated conic-gradient logo, plugin name, current Figma page dot.
+- **Toggle cards** (`.opt`): selected state uses `::before` masked conic-gradient ring
+  (`@property --angle` + `animation: spin`). Same technique on the export CTA button.
+- **Collapsible cards**: `<button class="card-h click" aria-expanded>` + chevron SVG;
+  collapsed state = `.card.col` (CSS hides `.card-b`).
+- **CSS tokens**: `--g1..g4` Google/Gemini spectrum, `--accent #5b5bf0`, `--r 14px`,
+  `--spin 5.5s`. `@property --angle` is CSS Houdini — works in Chromium (Figma Desktop).
+- **Prototype**: `C:\Users\nwikt\Downloads\pressly-pdf-export-aurora-wide.html`
+  (self-contained, no deps). Match its tokens when making UI changes.
+- **`prefers-reduced-motion`**: all conic animations disabled automatically.
+
 ---
 
 ## 6. Non-obvious decisions / gotchas (READ before touching these)
@@ -190,7 +203,9 @@ importing the plugin in Figma.
 
 Done (committed): P0 build/bundling/async API · P1 print-correct CMYK core +
 tests · P2 bundled FOGRA39 / PDF/X-1a · P3 thumbnails, persisted settings,
-filename templates, release prep · CMYK JPEG · DPI readout · font/image dedup.
+filename templates, release prep · CMYK JPEG · DPI readout · font/image dedup ·
+**Aurora UI redesign** (two-column 900 px layout, animated conic-gradient borders,
+Google/Gemini palette, SVG icons, accessible collapsible cards).
 
 Possible next steps (not started):
 - **Image downscale/JPEG in the RGB path** — usually the biggest real win for a

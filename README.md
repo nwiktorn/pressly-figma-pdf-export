@@ -14,6 +14,17 @@ Print-ready PDF export plugin for Figma.
 
 Runs fully locally — no network access (see `manifest.json`).
 
+## UI — Aurora design
+
+The plugin uses the "Aurora" visual identity: a two-column layout (900 px wide),
+animated conic-gradient borders on selected options and the export button, and a
+Google/Gemini-spectrum colour palette (`#4285F4 / #9b72cb / #d96570 / #3ec6c0`).
+Animations are disabled automatically via `@media (prefers-reduced-motion)`.
+
+The design source is `C:\Users\nwikt\Downloads\pressly-pdf-export-aurora-wide.html`
+(self-contained prototype, no dependencies). When making UI changes, match that
+prototype's tokens and component patterns.
+
 ## Architecture
 
 | File | Role |
