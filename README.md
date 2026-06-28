@@ -7,6 +7,10 @@ Print-ready PDF export plugin for Figma.
 - **PDF/X-1a** — embeds a Coated FOGRA39 OutputIntent for print shops.
 - **Bleed** (spad), **crop marks** in registration color, correct `TrimBox`/`BleedBox`,
   white background, PDF metadata (title/author/dates/ID).
+- **Quality of life** — frame thumbnails, settings remembered via `clientStorage`,
+  filename templates (`{name}` `{index}` `{date}` `{time}` `{w}` `{h}`).
+
+Runs fully locally — no network access (see `manifest.json`).
 
 ## Architecture
 

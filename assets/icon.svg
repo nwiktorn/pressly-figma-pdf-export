@@ -1,0 +1,13 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="28" fill="#18A0FB"/>
+  <!-- document -->
+  <path d="M40 26h32l20 20v56a4 4 0 0 1-4 4H40a4 4 0 0 1-4-4V30a4 4 0 0 1 4-4z" fill="#fff"/>
+  <path d="M72 26l20 20H76a4 4 0 0 1-4-4V26z" fill="#CDE8FF"/>
+  <!-- CMYK dots -->
+  <circle cx="52" cy="70" r="6" fill="#00AEEF"/>
+  <circle cx="64" cy="70" r="6" fill="#EC008C"/>
+  <circle cx="76" cy="70" r="6" fill="#FFF200"/>
+  <circle cx="64" cy="80" r="6" fill="#231F20"/>
+  <!-- PDF label -->
+  <text x="64" y="100" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#18A0FB" text-anchor="middle">PDF</text>
+</svg>

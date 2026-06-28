@@ -63,6 +63,8 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
 .frame-item.checked { background: #F0F7FF; }
 
 .frame-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.frame-thumb { width: 28px; height: 28px; flex-shrink: 0; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2) center/contain no-repeat; }
+.frame-thumb.loaded { border-color: transparent; }
 .frame-name { flex: 1; font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .frame-dims { font-size: 10px; color: var(--text3); white-space: nowrap; }
 
@@ -293,6 +295,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
         <input type="text" class="form-input" id="filename" value="export" placeholder="nazwa bez rozszerzenia">
         <span class="form-unit" id="fileExt">.pdf</span>
       </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px">Tokeny: <code>{name}</code> <code>{index}</code> <code>{date}</code> <code>{time}</code> <code>{w}</code> <code>{h}</code></div>
     </div>
   </div>
 
@@ -413,7 +416,7 @@ function renderFrames() {
     const el = document.createElement('div');
     el.className = 'frame-item checked';
     el.dataset.id = f.id;
-    el.innerHTML = `<input type="checkbox" checked><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
+    el.innerHTML = `<input type="checkbox" checked><span class="frame-thumb" data-thumb="${f.id}"></span><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
     const cb = el.querySelector('input');
     el.addEventListener('click', evt => {
       if (evt.target === cb) return;
@@ -448,12 +451,77 @@ function updateBtn() {
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// ─── Settings persistence (figma.clientStorage) ───────────────────────────────
+function collectSettings() {
+  return {
+    mode: S.mode, profile: S.profile, scale: S.scale,
+    bleed: S.bleed, bleedMm: S.bleedMm, cropMarks: S.cropMarks,
+    whiteBg: S.whiteBg, inkLimit: S.inkLimit, pdfx: S.pdfx,
+    filename: $('filename').value, metaTitle: $('metaTitle').value, metaAuthor: $('metaAuthor').value,
+  };
+}
+
+function saveSettings() {
+  parent.postMessage({ pluginMessage: { type: 'saveSettings', settings: collectSettings() } }, '*');
+}
+
+// Apply restored settings by driving the existing controls (so their change
+// handlers run and the dependent UI updates), rather than duplicating that logic.
+function applySettings(s) {
+  if (!s) return;
+  const fire = (el, type) => el && el.dispatchEvent(new Event(type, { bubbles: true }));
+  const setRadio = (name, val) => {
+    const el = document.querySelector(`input[name="${name}"][value="${val}"]`);
+    if (el) { el.checked = true; fire(el, 'change'); }
+  };
+  if (s.mode) setRadio('mode', s.mode);
+  if (s.profile) setRadio('profile', s.profile);
+  if (s.scale) { const p = document.querySelector(`#dpiGroup [data-scale="${s.scale}"]`); if (p) p.click(); }
+  const setCheck = (id, val, type = 'change') => {
+    const el = $(id); if (el && typeof val === 'boolean') { el.checked = val; fire(el, type); }
+  };
+  setCheck('bleedCheck', s.bleed);
+  if (s.bleedMm != null) { $('bleedMm').value = s.bleedMm; fire($('bleedMm'), 'input'); }
+  setCheck('cropCheck', s.cropMarks);
+  setCheck('whiteBgCheck', s.whiteBg);
+  setCheck('pdfxCheck', s.pdfx);
+  if (s.inkLimit != null) { $('inkLimit').value = s.inkLimit; fire($('inkLimit'), 'input'); }
+  if (s.filename != null) $('filename').value = s.filename;
+  if (s.metaTitle != null) $('metaTitle').value = s.metaTitle;
+  if (s.metaAuthor != null) $('metaAuthor').value = s.metaAuthor;
+  updateBtn();
+}
+
+// ─── Filename templates ───────────────────────────────────────────────────────
+// Supported tokens: {name} {index} {date} {time} {w} {h}. Tokens are optional;
+// a plain name (no braces) is used verbatim (with {index} appended per-file in
+// separate mode to avoid collisions).
+function applyTemplate(tpl, ctx) {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const time = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const out = tpl.replace(/\{(name|index|date|time|w|h)\}/g, (_, t) => {
+    switch (t) {
+      case 'name': return ctx.name != null ? ctx.name : '';
+      case 'index': return ctx.index != null ? String(ctx.index) : '';
+      case 'date': return date;
+      case 'time': return time;
+      case 'w': return ctx.w != null ? String(ctx.w) : '';
+      case 'h': return ctx.h != null ? String(ctx.h) : '';
+      default: return '';
+    }
+  });
+  return out;
+}
+
 // ─── Export entry point ───────────────────────────────────────────────────────
 $('btnCancel').addEventListener('click', () => parent.postMessage({ pluginMessage: { type: 'close' } }, '*'));
 $('btnExport').addEventListener('click', () => {
   const ids = getSelectedIds();
   if (!ids.length) return;
   exportErrors = [];
+  saveSettings();
   showProgress('Pobieranie z Figmy...', 0);
   $('resultsCard').classList.remove('visible');
   const format = S.profile === 'cmyk' ? 'PNG' : 'PDF';
@@ -465,7 +533,19 @@ let exportErrors = [];
 window.onmessage = async evt => {
   const msg = evt.data.pluginMessage;
   if (!msg) return;
-  if (msg.type === 'init') { frames = msg.frames; renderFrames(); }
+  if (msg.type === 'init') {
+    frames = msg.frames;
+    renderFrames();
+    if (msg.settings) applySettings(msg.settings);
+  }
+  if (msg.type === 'thumb') {
+    const holder = document.querySelector(`.frame-thumb[data-thumb="${msg.id}"]`);
+    if (holder) {
+      const url = URL.createObjectURL(new Blob([new Uint8Array(msg.bytes)], { type: 'image/png' }));
+      holder.style.backgroundImage = `url(${url})`;
+      holder.classList.add('loaded');
+    }
+  }
   if (msg.type === 'progress') {
     const pct = Math.round(msg.current / msg.total * 65);
     showProgress(`Eksportuję ${msg.current}/${msg.total}`, pct, msg.name);
@@ -494,7 +574,15 @@ window.onmessage = async evt => {
 
 // ─── Handle export data ───────────────────────────────────────────────────────
 async function handleExportDone(data) {
-  const filename = $('filename').value.trim() || 'export';
+  const tpl = $('filename').value.trim() || 'export';
+  // Name for a single merged file / the ZIP archive (no per-frame index).
+  const archiveName = applyTemplate(tpl, { name: safeName(data[0] ? data[0].name : 'export') }) || 'export';
+  // Name for one file inside the ZIP; ensures uniqueness when no token varies.
+  const fileName = i => {
+    let base = applyTemplate(tpl, { name: safeName(data[i].name), index: i + 1, w: data[i].width, h: data[i].height });
+    if (!/\{(name|index)\}/.test(tpl) && data.length > 1) base += '-' + (i + 1);
+    return base.trim() || ('export-' + (i + 1));
+  };
 
   if (S.profile === 'cmyk') {
     if (S.mode === 'separate') {
@@ -502,20 +590,20 @@ async function handleExportDone(data) {
       for (let i = 0; i < data.length; i++) {
         showProgress(`CMYK ${i+1}/${data.length}`, 70 + Math.round(i/data.length*25), data[i].name);
         const pdf = await buildCmykPdf([data[i]]);
-        zip.file(safeName(data[i].name) + '.pdf', pdf);
+        zip.file(fileName(i) + '.pdf', pdf);
       }
       showProgress('Pakuję ZIP...', 96);
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
       const url = URL.createObjectURL(blob);
-      triggerDownload(url, filename + '.zip');
-      showResults([{ name: filename + '.zip', size: blob.size, url }]);
+      triggerDownload(url, archiveName + '.zip');
+      showResults([{ name: archiveName + '.zip', size: blob.size, url }]);
     } else {
       showProgress('Konwersja CMYK...', 72, `${data.length} strony`);
       const pdf = await buildCmykPdf(data);
       const blob = new Blob([pdf], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      triggerDownload(url, filename + '.pdf');
-      showResults([{ name: filename + '.pdf', size: pdf.length, url }]);
+      triggerDownload(url, archiveName + '.pdf');
+      showResults([{ name: archiveName + '.pdf', size: pdf.length, url }]);
     }
   } else {
     if (S.mode === 'separate') {
@@ -523,20 +611,20 @@ async function handleExportDone(data) {
       for (let i = 0; i < data.length; i++) {
         showProgress(`PDF ${i+1}/${data.length}`, 70 + Math.round(i/data.length*25), data[i].name);
         const pdf = await buildSingleRgbPdf(new Uint8Array(data[i].bytes));
-        zip.file(safeName(data[i].name) + '.pdf', pdf);
+        zip.file(fileName(i) + '.pdf', pdf);
       }
       showProgress('Pakuję ZIP...', 96);
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
       const url = URL.createObjectURL(blob);
-      triggerDownload(url, filename + '.zip');
-      showResults([{ name: filename + '.zip', size: blob.size, url }]);
+      triggerDownload(url, archiveName + '.zip');
+      showResults([{ name: archiveName + '.zip', size: blob.size, url }]);
     } else {
       showProgress('Łączę strony...', 78);
       const pdf = await buildMergedRgbPdf(data);
       const blob = new Blob([pdf], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      triggerDownload(url, filename + '.pdf');
-      showResults([{ name: filename + '.pdf', size: pdf.length, url }]);
+      triggerDownload(url, archiveName + '.pdf');
+      showResults([{ name: archiveName + '.pdf', size: pdf.length, url }]);
     }
   }
 }

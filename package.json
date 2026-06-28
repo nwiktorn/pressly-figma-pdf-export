@@ -1,7 +1,8 @@
 {
   "name": "pdf-export-pro",
   "version": "0.2.0",
-  "description": "PDF Export Pro — print-ready PDF export plugin for Figma (RGB vector + CMYK raster, bleed, crop marks).",
+  "description": "PDF Export Pro — print-ready PDF export plugin for Figma (RGB vector + CMYK raster, bleed, crop marks, PDF/X-1a).",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "build": "node build.mjs",
