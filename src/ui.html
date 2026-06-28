@@ -224,6 +224,19 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
       </div>
       <div style="font-size:10px;color:var(--text3);margin-top:4px">Maks. pokrycie CMYK. 300–320% dla papieru powlekanego, 240–280% dla gazetowego.</div>
       <div class="divider"></div>
+      <div class="form-row">
+        <span class="form-label">Kompresja</span>
+        <select class="form-input" id="compression">
+          <option value="flate">Bezstratna (większy plik)</option>
+          <option value="jpeg">JPEG (mniejszy plik)</option>
+        </select>
+      </div>
+      <div class="form-row hidden" id="jpegQualityRow" style="padding-left:0">
+        <span class="form-label">Jakość JPEG</span>
+        <input type="range" id="jpegQuality" min="40" max="98" step="1" value="85" style="flex:1">
+        <span class="form-unit" id="jpegQualityVal">85</span>
+      </div>
+      <div class="divider"></div>
       <label class="checkbox-row">
         <input type="checkbox" id="pdfxCheck">
         <span class="checkbox-label">PDF/X-1a (OutputIntent)</span>
@@ -328,7 +341,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
 <script>
 // ─── State ───────────────────────────────────────────────────────────────────
 let frames = [];
-const S = { mode: 'multi', profile: 'rgb', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false };
+const S = { mode: 'multi', profile: 'rgb', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false, compression: 'flate', jpegQuality: 85 };
 
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -390,6 +403,14 @@ $('inkLimit').addEventListener('input', e => {
 $('pdfxCheck').addEventListener('change', e => {
   S.pdfx = e.target.checked;
   $('pdfxBadge').textContent = S.pdfx ? 'PDF/X' : 'wył.';
+});
+$('compression').addEventListener('change', e => {
+  S.compression = e.target.value;
+  $('jpegQualityRow').classList.toggle('hidden', S.compression !== 'jpeg');
+});
+$('jpegQuality').addEventListener('input', e => {
+  S.jpegQuality = parseInt(e.target.value, 10) || 85;
+  $('jpegQualityVal').textContent = S.jpegQuality;
 });
 
 // ─── Frame list ───────────────────────────────────────────────────────────────
@@ -457,6 +478,7 @@ function collectSettings() {
     mode: S.mode, profile: S.profile, scale: S.scale,
     bleed: S.bleed, bleedMm: S.bleedMm, cropMarks: S.cropMarks,
     whiteBg: S.whiteBg, inkLimit: S.inkLimit, pdfx: S.pdfx,
+    compression: S.compression, jpegQuality: S.jpegQuality,
     filename: $('filename').value, metaTitle: $('metaTitle').value, metaAuthor: $('metaAuthor').value,
   };
 }
@@ -486,6 +508,8 @@ function applySettings(s) {
   setCheck('whiteBgCheck', s.whiteBg);
   setCheck('pdfxCheck', s.pdfx);
   if (s.inkLimit != null) { $('inkLimit').value = s.inkLimit; fire($('inkLimit'), 'input'); }
+  if (s.compression) { $('compression').value = s.compression; fire($('compression'), 'change'); }
+  if (s.jpegQuality != null) { $('jpegQuality').value = s.jpegQuality; fire($('jpegQuality'), 'input'); }
   if (s.filename != null) $('filename').value = s.filename;
   if (s.metaTitle != null) $('metaTitle').value = s.metaTitle;
   if (s.metaAuthor != null) $('metaAuthor').value = s.metaAuthor;
@@ -718,6 +742,8 @@ function cmykOpts() {
     // so plain CMYK exports stay small.
     iccProfile: S.pdfx ? (window.__ICC_CMYK__ || null) : null,
     outputCondition: window.__ICC_CMYK_NAME__,
+    compression: S.compression,
+    jpegQuality: S.jpegQuality,
     meta: {
       title: $('metaTitle').value.trim(),
       author: $('metaAuthor').value.trim(),

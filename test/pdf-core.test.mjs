@@ -141,4 +141,59 @@ await test('PDF/X with real FOGRA39: conformant + embeds profile', async () => {
   await PDFDocument.load(bytes);
 });
 
+const jpeg = require('jpeg-js');
+
+function solidCmyk(w, h, r, g, b) {
+  const rgba = new Uint8Array(w * h * 4);
+  for (let i = 0; i < w * h; i++) { rgba[i * 4] = r; rgba[i * 4 + 1] = g; rgba[i * 4 + 2] = b; rgba[i * 4 + 3] = 255; }
+  return PDFCore.rgbaToCmyk(rgba, w, h, 400);
+}
+
+await test('encodeCmykJpeg: valid JPEG markers + Adobe APP14', () => {
+  const jpg = PDFCore.encodeCmykJpeg(solidCmyk(16, 16, 128, 64, 32), 16, 16, 85);
+  assert.equal(jpg[0], 0xff); assert.equal(jpg[1], 0xd8);                 // SOI
+  assert.equal(jpg[jpg.length - 2], 0xff); assert.equal(jpg[jpg.length - 1], 0xd9); // EOI
+  const s = String.fromCharCode(...jpg.slice(0, 64));
+  assert.ok(s.includes('Adobe'), 'Adobe APP14 marker present');
+});
+
+await test('encodeCmykJpeg: round-trips colours through jpeg-js (PDF-reader heuristic)', () => {
+  const w = 16, h = 16;
+  const cases = [
+    [[255, 255, 255], [255, 255, 255]],
+    [[0, 0, 0], [0, 0, 0]],
+    [[255, 0, 0], [255, 0, 0]],
+    [[0, 128, 255], [0, 128, 255]],
+  ];
+  for (const [inRgb, expect] of cases) {
+    const jpg = PDFCore.encodeCmykJpeg(solidCmyk(w, h, ...inRgb), w, h, 92);
+    const dec = jpeg.decode(Buffer.from(jpg), { formatAsRGBA: true, tolerantDecoding: true });
+    const i = ((h / 2) * w + (w / 2)) * 4;
+    const out = [dec.data[i], dec.data[i + 1], dec.data[i + 2]];
+    for (let c = 0; c < 3; c++) {
+      assert.ok(Math.abs(out[c] - expect[c]) <= 6,
+        `${inRgb} → got ${out} expected ~${expect} (no inversion/scramble)`);
+    }
+  }
+});
+
+await test('assembleCmykPdf: JPEG path parses, uses DCTDecode, beats Flate on size', async () => {
+  // Continuous-tone (gradient) image — the case raster JPEG is meant for.
+  const w = 128, h = 128;
+  const cmyk = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    cmyk[i] = (x / w * 255) | 0; cmyk[i + 1] = (y / h * 255) | 0;
+    cmyk[i + 2] = ((x + y) / (w + h) * 255) | 0; cmyk[i + 3] = 0;
+  }
+  const page = { cmyk, imgW: w, imgH: h, ptW: 200, ptH: 200, bleedPt: 0 };
+
+  const flate = PDFCore.assembleCmykPdf([page], { compression: 'flate' });
+  const jpg = PDFCore.assembleCmykPdf([page], { compression: 'jpeg', jpegQuality: 80 });
+  const s = dec.decode(jpg);
+  assert.ok(s.includes('/DCTDecode'), 'image uses DCTDecode');
+  assert.ok(jpg.length < flate.length / 2, `JPEG (${jpg.length}) should be << Flate (${flate.length})`);
+  await PDFDocument.load(jpg);
+});
+
 console.log(`\n${passed} passed${process.exitCode ? ' (with failures)' : ''}`);

@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "chokidar": "^3.6.0",
+    "jpeg-js": "^0.4.4",
     "jszip": "3.10.1",
     "pako": "2.1.0",
     "pdf-lib": "1.17.1"

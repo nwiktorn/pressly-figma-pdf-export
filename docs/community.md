@@ -16,7 +16,8 @@ Export Figma frames to PDFs that are actually ready for print.
 - **RGB vector PDF** — text and shapes stay crisp; merge frames into one
   document or export each frame to a ZIP.
 - **CMYK PDF** — frames are rasterised to `DeviceCMYK` with an adjustable ink
-  limit (GCR) for coated or uncoated stock.
+  limit (GCR) for coated or uncoated stock, with optional JPEG compression for
+  dramatically smaller files.
 - **PDF/X-1a** — embeds a Coated FOGRA39 OutputIntent so print shops get a
   standards-compliant file out of the box.
 - **Bleed & crop marks** — real `TrimBox`/`BleedBox`, registration-colour marks

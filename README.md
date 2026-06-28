@@ -3,7 +3,8 @@
 Print-ready PDF export plugin for Figma.
 
 - **RGB** — vector PDF (text/shapes stay crisp), multi-page merge or per-frame ZIP.
-- **CMYK** — raster PDF with `DeviceCMYK` images, ink-limit/GCR control.
+- **CMYK** — raster PDF with `DeviceCMYK` images, ink-limit/GCR control, and
+  optional JPEG (`DCTDecode`) compression for much smaller files.
 - **PDF/X-1a** — embeds a Coated FOGRA39 OutputIntent for print shops.
 - **Bleed** (spad), **crop marks** in registration color, correct `TrimBox`/`BleedBox`,
   white background, PDF metadata (title/author/dates/ID).
