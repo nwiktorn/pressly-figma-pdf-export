@@ -622,6 +622,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
 .frame-item.checked { background: #F0F7FF; }
 
 .frame-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.dpi-readout { margin-top: 10px; padding: 8px 10px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); font-size: 11px; line-height: 1.5; color: var(--text); }
+.dpi-readout .dpi-big { font-weight: 700; }
+.dpi-readout .dpi-dim { color: var(--text3); }
 .frame-thumb { width: 28px; height: 28px; flex-shrink: 0; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2) center/contain no-repeat; }
 .frame-thumb.loaded { border-color: transparent; }
 .frame-name { flex: 1; font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -756,7 +759,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
       </div>
       <div class="info-banner info-blue" id="bannerRGB">
         <span class="banner-icon">ℹ️</span>
-        <span>Wektor PDF — tekst zaznaczalny, kolory RGB. Idealny do wysyłania mailem i podglądu na ekranie.</span>
+        <span>Wektor PDF — tekst zaznaczalny, kolory RGB, <b>niezależny od DPI</b> (skaluje się bez utraty jakości). Idealny do maila i ekranu.</span>
       </div>
       <div class="info-banner info-yellow hidden" id="bannerCMYK">
         <span class="banner-icon">⚠️</span>
@@ -774,7 +777,8 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Inte
         <button class="pill active" data-scale="3">288 DPI<br><span style="font-size:9px;opacity:.65">druk standard</span></button>
         <button class="pill" data-scale="4">384 DPI<br><span style="font-size:9px;opacity:.65">offset / max</span></button>
       </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:8px">Figma eksportuje maks. 4× (384 DPI). Do większości wydruków wystarczy 288 DPI.</div>
+      <div class="dpi-readout" id="dpiReadout"></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px">Figma eksportuje maks. 4× (384 DPI). Do większości wydruków wystarczy 288 DPI.</div>
       <div class="divider"></div>
       <div class="form-row">
         <span class="form-label">Limit farby</span>
@@ -931,6 +935,7 @@ $('dpiGroup').addEventListener('click', e => {
   S.scale = parseInt(pill.dataset.scale);
   document.querySelectorAll('#dpiGroup .pill').forEach(p => p.classList.remove('active'));
   pill.classList.add('active');
+  updateDpiReadout();
 });
 
 // ─── Collapsible cards ────────────────────────────────────────────────────────
@@ -1027,6 +1032,30 @@ function updateBtn() {
   if (n === 0) btn.textContent = 'Eksportuj PDF';
   else if (S.mode === 'separate') btn.textContent = `Eksportuj ${n} plik${n > 1 ? 'i' : ''} → ZIP`;
   else btn.textContent = `Eksportuj ${n} stron${n > 1 ? 'y' : 'ę'} → PDF`;
+  updateDpiReadout();
+}
+
+// Show the real output resolution of the CMYK raster: DPI = 96 × scale (the
+// plugin treats 96 px = 1 inch), plus the resulting pixel size and physical
+// size for the selected frame(s).
+function updateDpiReadout() {
+  const el = $('dpiReadout');
+  if (!el) return;
+  const dpi = 96 * S.scale;
+  const sel = getSelectedFrames();
+  const fmt = n => (Math.round(n * 10) / 10).toString();
+  const mm = px => fmt(px / 96 * 25.4);
+  let detail;
+  if (!sel.length) {
+    detail = '<span class="dpi-dim">zaznacz frame, aby zobaczyć wymiary wyjścia</span>';
+  } else {
+    const f = sel[0];
+    const ow = Math.round(f.width * S.scale), oh = Math.round(f.height * S.scale);
+    const more = sel.length > 1 ? ` <span class="dpi-dim">(${esc(f.name)}; pozostałe proporcjonalnie)</span>` : '';
+    detail = `<span class="dpi-dim">${f.width}×${f.height} px →</span> ${ow}×${oh} px` +
+      ` <span class="dpi-dim">· ${mm(f.width)}×${mm(f.height)} mm</span>${more}`;
+  }
+  el.innerHTML = `<span class="dpi-big">${dpi} DPI</span> · ${detail}`;
 }
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
