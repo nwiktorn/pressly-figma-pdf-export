@@ -1,4 +1,4 @@
-# AGENTS.md — agent onboarding for PDF Export Pro
+# AGENTS.md — agent onboarding for Pressly - PDF Export
 
 > Vendor-neutral agent guide (read by Cursor and other AI coding tools; Claude
 > Code reaches it via the small `CLAUDE.md` pointer). This is the canonical doc.
@@ -10,7 +10,7 @@ and the non-obvious decisions behind them, so you can be productive immediately.
 
 ## 1. What this is
 
-**PDF Export Pro** is a **Figma plugin** that exports frames to **print-ready and
+**Pressly - PDF Export** is a **Figma plugin** that exports frames to **print-ready and
 share-ready PDFs**. It is aimed at people who need real prepress output (posters,
 flyers, CVs, multi-page documents) directly from Figma, not just a screenshot.
 

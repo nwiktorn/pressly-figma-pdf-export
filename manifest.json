@@ -1,6 +1,6 @@
 {
-  "name": "PDF Export Pro",
-  "id": "pdf-export-pro-local",
+  "name": "Pressly - PDF Export",
+  "id": "pressly-pdf-export-local",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",

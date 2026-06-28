@@ -1,7 +1,7 @@
-figma.showUI(__html__, { width: 400, height: 660, title: 'PDF Export Pro' });
+figma.showUI(__html__, { width: 400, height: 660, title: 'Pressly - PDF Export' });
 
 const EXPORTABLE = ['FRAME', 'COMPONENT', 'SECTION'];
-const SETTINGS_KEY = 'pdf-export-pro-settings';
+const SETTINGS_KEY = 'pressly-pdf-export-settings';
 const THUMB_WIDTH = 64; // px wide preview per frame
 
 function getFrames() {

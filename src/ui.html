@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>PDF Export Pro</title>
+<title>Pressly - PDF Export</title>
 <!-- @INJECT:VENDOR_LIBS -->
 <!-- pdf-lib, jszip and pako are inlined here at build time.
      Edit src/ui.html, then run `npm run build` to regenerate the root ui.html.
@@ -715,7 +715,7 @@ function setMeta(doc) {
   const a = $('metaAuthor').value.trim();
   const s = $('metaSubject').value.trim();
   if (t) doc.setTitle(t); if (a) doc.setAuthor(a); if (s) doc.setSubject(s);
-  doc.setCreator('PDF Export Pro — Figma Plugin');
+  doc.setCreator('Pressly - PDF Export — Figma Plugin');
 }
 
 function addCropMarksRgb(page) {
@@ -779,7 +779,7 @@ function cmykOpts() {
     meta: {
       title: $('metaTitle').value.trim(),
       author: $('metaAuthor').value.trim(),
-      creator: 'PDF Export Pro',
+      creator: 'Pressly - PDF Export',
     },
   };
 }

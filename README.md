@@ -1,4 +1,4 @@
-# PDF Export Pro
+# Pressly - PDF Export
 
 Print-ready PDF export plugin for Figma.
 

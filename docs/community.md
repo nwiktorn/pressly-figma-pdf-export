@@ -1,11 +1,11 @@
 # Figma Community listing
 
-Copy and assets for publishing **PDF Export Pro** to the Figma Community.
+Copy and assets for publishing **Pressly - PDF Export** to the Figma Community.
 Publishing itself is done from Figma (Plugins → Manage → Publish); this file is
 the source of truth for the listing text.
 
 ## Name
-PDF Export Pro
+Pressly - PDF Export
 
 ## Tagline (one line)
 Print-ready PDF export — CMYK, bleed, crop marks and PDF/X-1a.

@@ -3,7 +3,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>PDF Export Pro</title>
+<title>Pressly - PDF Export</title>
 <!-- pdf-lib -->
 <script>!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t=t||self).PDFLib={})}(this,(function(t){"use strict";
 /*! *****************************************************************************
@@ -201,8 +201,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     let info = '<<';
     if (meta.title) info += ` /Title (${pdfTextEscape(meta.title)})`;
     if (meta.author) info += ` /Author (${pdfTextEscape(meta.author)})`;
-    info += ` /Creator (${pdfTextEscape(meta.creator || 'PDF Export Pro')})`;
-    info += ` /Producer (PDF Export Pro)`;
+    info += ` /Creator (${pdfTextEscape(meta.creator || 'Pressly - PDF Export')})`;
+    info += ` /Producer (Pressly - PDF Export)`;
     info += ` /CreationDate (${pdfDate(now)}) /ModDate (${pdfDate(now)})`;
     if (pdfx) info += ` /GTS_PDFXVersion (PDF/X-1:2001) /GTS_PDFXConformance (PDF/X-1a:2001) /Trapped /False`;
     info += ' >>\n';
@@ -1368,7 +1368,7 @@ function setMeta(doc) {
   const a = $('metaAuthor').value.trim();
   const s = $('metaSubject').value.trim();
   if (t) doc.setTitle(t); if (a) doc.setAuthor(a); if (s) doc.setSubject(s);
-  doc.setCreator('PDF Export Pro — Figma Plugin');
+  doc.setCreator('Pressly - PDF Export — Figma Plugin');
 }
 
 function addCropMarksRgb(page) {
@@ -1432,7 +1432,7 @@ function cmykOpts() {
     meta: {
       title: $('metaTitle').value.trim(),
       author: $('metaAuthor').value.trim(),
-      creator: 'PDF Export Pro',
+      creator: 'Pressly - PDF Export',
     },
   };
 }

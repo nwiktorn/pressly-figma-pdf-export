@@ -155,8 +155,8 @@
     let info = '<<';
     if (meta.title) info += ` /Title (${pdfTextEscape(meta.title)})`;
     if (meta.author) info += ` /Author (${pdfTextEscape(meta.author)})`;
-    info += ` /Creator (${pdfTextEscape(meta.creator || 'PDF Export Pro')})`;
-    info += ` /Producer (PDF Export Pro)`;
+    info += ` /Creator (${pdfTextEscape(meta.creator || 'Pressly - PDF Export')})`;
+    info += ` /Producer (Pressly - PDF Export)`;
     info += ` /CreationDate (${pdfDate(now)}) /ModDate (${pdfDate(now)})`;
     if (pdfx) info += ` /GTS_PDFXVersion (PDF/X-1:2001) /GTS_PDFXConformance (PDF/X-1a:2001) /Trapped /False`;
     info += ' >>\n';
