@@ -1,10 +1,13 @@
 // Node test harness for the pure CMYK PDF core. Run: npm test
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { PDFDocument } from 'pdf-lib';
+import * as PDFLib from 'pdf-lib';
+const { PDFDocument, PDFName, PDFRawStream } = PDFLib;
 
 const require = createRequire(import.meta.url);
 const PDFCore = require('../src/lib/pdf-core.js');
+const PDFMerge = require('../src/lib/pdf-merge.js');
 
 let passed = 0;
 async function test(name, fn) {
@@ -195,5 +198,69 @@ await test('assembleCmykPdf: JPEG path parses, uses DCTDecode, beats Flate on si
   assert.ok(jpg.length < flate.length / 2, `JPEG (${jpg.length}) should be << Flate (${flate.length})`);
   await PDFDocument.load(jpg);
 });
+
+await test('dedupeStreams: collapses identical streams and repoints references', async () => {
+  const doc = await PDFDocument.create();
+  const ctx = doc.context;
+  const payload = new Uint8Array(4000).fill(7);
+  const mk = b => ctx.register(PDFRawStream.of(ctx.obj({ Length: b.length }), b));
+  const r1 = mk(payload);
+  const r2 = mk(payload.slice());                 // identical bytes → duplicate
+  const r3 = mk(new Uint8Array(4000).fill(9));     // different → kept
+  const page = doc.addPage();
+  page.node.set(PDFName.of('S1'), r1);
+  page.node.set(PDFName.of('S2'), r2);
+  page.node.set(PDFName.of('S3'), r3);
+
+  const removed = PDFMerge.dedupeStreams(PDFLib, doc);
+  assert.equal(removed, 1, 'one duplicate removed');
+  assert.equal(page.node.get(PDFName.of('S2')), r1, 'S2 repointed to canonical');
+  assert.equal(page.node.get(PDFName.of('S3')), r3, 'distinct stream untouched');
+  await PDFDocument.load(await doc.save()); // still valid
+});
+
+await test('dedupeStreams: no-op when there are no duplicates', async () => {
+  const doc = await PDFDocument.create();
+  const ctx = doc.context;
+  const mk = b => ctx.register(PDFRawStream.of(ctx.obj({ Length: b.length }), b));
+  const page = doc.addPage();
+  page.node.set(PDFName.of('A'), mk(new Uint8Array(100).fill(1)));
+  page.node.set(PDFName.of('B'), mk(new Uint8Array(100).fill(2)));
+  assert.equal(PDFMerge.dedupeStreams(PDFLib, doc), 0);
+});
+
+// Realistic end-to-end check using a full (non-subset) embedded font, mirroring
+// the plugin's "load each frame separately, then merge" flow. Skipped if the
+// font / fontkit aren't available so the suite stays portable.
+{
+  const ARIAL = 'C:/Windows/Fonts/arial.ttf';
+  let fontkit = null;
+  try { fontkit = require('@pdf-lib/fontkit'); fontkit = fontkit.default || fontkit; } catch (e) {}
+  if (fontkit && existsSync(ARIAL)) {
+    await test('dedupeStreams: multi-page merge with full font shrinks a lot', async () => {
+      const arial = readFileSync(ARIAL);
+      const makePage = async t => {
+        const d = await PDFDocument.create();
+        d.registerFontkit(fontkit);
+        const f = await d.embedFont(arial, { subset: false });
+        d.addPage([400, 600]).drawText(t, { x: 40, y: 540, size: 18, font: f });
+        return new Uint8Array(await d.save());
+      };
+      const merged = await PDFDocument.create();
+      for (const t of ['CV', 'Exp', 'Edu', 'Skills', 'Contact']) {
+        const src = await PDFDocument.load(await makePage(t));
+        (await merged.copyPages(src, src.getPageIndices())).forEach(p => merged.addPage(p));
+      }
+      const before = await merged.save();
+      PDFMerge.dedupeStreams(PDFLib, merged);
+      const after = await merged.save();
+      assert.ok(after.length < before.length * 0.4,
+        `dedup should cut size hard: ${before.length} → ${after.length}`);
+      assert.equal((await PDFDocument.load(after)).getPageCount(), 5, 'all pages preserved');
+    });
+  } else {
+    console.log('  ⊘ dedupeStreams full-font merge (skipped: font/fontkit unavailable)');
+  }
+}
 
 console.log(`\n${passed} passed${process.exitCode ? ' (with failures)' : ''}`);

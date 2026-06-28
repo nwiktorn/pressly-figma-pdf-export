@@ -694,6 +694,9 @@ async function buildMergedRgbPdf(data) {
     const pages = await merged.copyPages(src, [...Array(src.getPageCount()).keys()]);
     pages.forEach(p => { merged.addPage(p); if (S.cropMarks || S.bleed) addCropMarksRgb(p); });
   }
+  // Collapse identical fonts/images duplicated across pages (big win for
+  // multi-page CVs where the same font would otherwise be stored per page).
+  PDFMerge.dedupeStreams(PDFLib, merged);
   return merged.save();
 }
 

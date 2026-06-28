@@ -3,6 +3,7 @@
 Print-ready PDF export plugin for Figma.
 
 - **RGB** — vector PDF (text/shapes stay crisp), multi-page merge or per-frame ZIP.
+  Merged PDFs deduplicate identical fonts/images across pages to keep files small.
 - **CMYK** — raster PDF with `DeviceCMYK` images, ink-limit/GCR control, and
   optional JPEG (`DCTDecode`) compression for much smaller files.
 - **PDF/X-1a** — embeds a Coated FOGRA39 OutputIntent for print shops.
@@ -22,6 +23,7 @@ Runs fully locally — no network access (see `manifest.json`).
 | `src/ui.html` | **Source** for the plugin UI + all PDF-building logic. |
 | `ui.html` | **Generated** — `src/ui.html` with `pdf-lib`, `jszip`, `pako` inlined. Referenced by the manifest. Do not edit by hand. |
 | `src/lib/pdf-core.js` | Pure (DOM-free) CMYK PDF builder — unit-tested in Node. |
+| `src/lib/pdf-merge.js` | Cross-page stream (font/image) deduplication for merged RGB PDFs. |
 | `assets/CoatedFOGRA39.icc` | Default CMYK output profile (ECI, see `NOTICE.md`), embedded for PDF/X. |
 | `build.mjs` | Inlines the vendored libraries, `pdf-core`, and the ICC profile into `src/ui.html` → `ui.html`. |
 | `test/` | Node tests for the PDF core. Run `npm test`. |

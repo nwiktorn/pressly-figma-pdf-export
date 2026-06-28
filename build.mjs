@@ -27,6 +27,7 @@ const VENDOR = [
 // First-party modules, inlined after the vendor libs (they depend on `pako`).
 const APP_MODULES = [
   { name: 'pdf-core', path: 'src/lib/pdf-core.js' },
+  { name: 'pdf-merge', path: 'src/lib/pdf-merge.js' },
 ];
 
 // Bundled default CMYK output profile for PDF/X. ECI's Coated FOGRA39 is free to
