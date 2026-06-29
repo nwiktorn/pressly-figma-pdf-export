@@ -42,6 +42,7 @@ Everything runs **locally inside the plugin** — no network calls, no uploads.
 | `build.mjs` | Inlines vendored libs + app modules + ICC profile into `ui.html`. |
 | `test/pdf-core.test.mjs` | Node test suite (`npm test`). 18 tests. |
 | `docs/community.md` | Figma Community listing copy + publish checklist. |
+| `docs/size-optimization.md` | **Design doc** — why Figma vector PDFs are large (6-digit coords) and the planned precision-reduction shrink that beats Ghostscript while keeping text selectable. |
 | `README.md` | User/dev-facing overview. |
 | `NOTICE.md` | Third-party attributions (ICC profile, libraries). |
 
@@ -172,6 +173,26 @@ All UI state is the `S` object in `src/ui.html`.
   It does **NOT** re-subset fonts Figma already embedded (would need a font
   toolkit). Per-frame Figma subsets differ per page and are legitimately not
   merged.
+- **Why Figma vector PDFs are big = coordinate precision, not fonts.** Figma
+  emits **Type3 fonts** (glyphs are `CharProc` vector streams; **0 embedded font
+  bytes**, so font subsetting buys nothing) and writes the page `/Contents` with
+  **6 fractional digits on every number** (≈96% of the file). `optimizeStreams`
+  rounds that precision (2 dp default ⇒ −55%, beats Ghostscript; 1 dp opt-in)
+  and re-deflates. **Two safety rules:** (1) gate by a structural **allowlist** —
+  only page `/Contents`, Type3 `/CharProcs`, Form XObjects — never
+  `/Image`/ICC/`/Metadata`/font streams (a *denylist* would leak the binary
+  ICCBased profile stream); (2) rewrite via a **content-stream tokenizer**, not a
+  blind regex, so strings `(...)`, hex `<...>`, names, comments and **inline
+  images `BI…ID…EI` (raw binary)** are passed through untouched. Reduce only
+  geometry/text operands; **keep colour operands** (avoid banding — they're ~3 KB
+  anyway). Full rationale + measurements in `docs/size-optimization.md`.
+- **`pako` is not a bare global in Figma's sandbox.** pako 2.x registers on
+  `self.pako` / `globalThis.pako`, but Figma's plugin iframe does not make that
+  accessible as the bare name `pako` in the main `<script>` block. In `pdf-core.js`
+  pako is injected via the UMD factory parameter (`root.pako`), which works. In the
+  call sites in `src/ui.html` always use `self.pako` explicitly:
+  `PDFMerge.optimizeStreams(PDFLib, self.pako, PDFCore, doc, opts)`. Do NOT write
+  the bare `pako` at any call site in the UI script.
 - **FOGRA39 profile licensing.** ECI profiles are free to use and redistribute
   unmodified (see `NOTICE.md`). The file currently came from a local Adobe/ECI
   install; if provenance matters, replace with the pristine ECI download. Print
@@ -188,8 +209,10 @@ All UI state is the `S` object in `src/ui.html`.
 `npm test` runs `test/pdf-core.test.mjs` (no framework, Node assert). Covers:
 RGB→CMYK conversion + ink limit, CMYK PDF geometry/metadata/PDF-X/`/ID`, the real
 FOGRA39 profile + ICC inflate roundtrip, the CMYK JPEG encoder (markers + colour
-round-trip via jpeg-js + size vs Flate), and stream dedup (repointing, no-op,
-full-font multi-page shrink). 18 tests.
+round-trip via jpeg-js + size vs Flate), stream dedup (repointing, no-op,
+full-font multi-page shrink), and `optimizeStreams` / `reduceOperatorPrecision`
+(tokenizer: strings/hex/inline-image/colour-preserve/binary-guard + end-to-end
+reduce+redeflate integration). **31 tests total.**
 
 The pure logic is Node-testable precisely because `pdf-core.js`/`pdf-merge.js`
 take their dependencies (pako, PDFLib) by injection and avoid the DOM. **What is
@@ -208,8 +231,13 @@ filename templates, release prep · CMYK JPEG · DPI readout · font/image dedup
 Google/Gemini palette, SVG icons, accessible collapsible cards).
 
 Possible next steps (not started):
-- **Image downscale/JPEG in the RGB path** — usually the biggest real win for a
-  CV with a photo (single-page exports are image-bound, not font-bound).
+- **RGB size optimization (precision reduction)** — *implemented.* Rounds Figma's
+  6-digit coordinates (2 dp standard, 1 dp maximum opt-in) via an operator-aware
+  tokenizer and re-deflates at zlib level 9. −55% on a real CV, beats Ghostscript,
+  text stays selectable. UI control: "Rozmiar pliku PDF" pill row in sRGB section.
+  See `docs/size-optimization.md` for design rationale.
+- **Image downscale/JPEG in the RGB path** — complementary lever for a CV with a
+  photo (precision reduction only shrinks geometry, not raster images).
 - **True font re-subsetting** of Figma-embedded fonts (needs fontkit; larger,
   riskier).
 - **Size budget** mode (auto-pick quality to hit e.g. a 2 MB target).

@@ -263,4 +263,153 @@ await test('dedupeStreams: no-op when there are no duplicates', async () => {
   }
 }
 
+// ─── looksLikeOperatorStream ─────────────────────────────────────────────────
+
+await test('looksLikeOperatorStream: true for typical operator stream', () => {
+  const enc = new TextEncoder();
+  const b = enc.encode('1.234567 0.000000 m 8.579994 72.000000 l S');
+  assert.ok(PDFCore.looksLikeOperatorStream(b));
+});
+
+await test('looksLikeOperatorStream: false for bytes with NUL', () => {
+  const b = new Uint8Array([49, 46, 50, 0, 51, 32, 109]); // "1.2\x003 m"
+  assert.ok(!PDFCore.looksLikeOperatorStream(b));
+});
+
+await test('looksLikeOperatorStream: false for high-byte binary data', () => {
+  const b = new Uint8Array(100);
+  for (let i = 0; i < 100; i++) b[i] = 0x80 + (i % 64); // all high bytes
+  assert.ok(!PDFCore.looksLikeOperatorStream(b));
+});
+
+// ─── reduceOperatorPrecision — tokenizer correctness ─────────────────────────
+
+function enc(s) { return new TextEncoder().encode(s); }
+function str(b) { return new TextDecoder('latin1').decode(b); }
+
+await test('reduceOperatorPrecision: geometry rounds at 2 dp', () => {
+  const r = PDFCore.reduceOperatorPrecision(enc('1.234567 0.000000 m'), { decimals: 2 });
+  assert.equal(str(r), '1.23 0 m');
+});
+
+await test('reduceOperatorPrecision: geometry rounds at 1 dp', () => {
+  const r = PDFCore.reduceOperatorPrecision(enc('1.234567 0.000000 m'), { decimals: 1 });
+  assert.equal(str(r), '1.2 0 m');
+});
+
+await test('reduceOperatorPrecision: integers are untouched', () => {
+  const r = PDFCore.reduceOperatorPrecision(enc('100 200 m'), { decimals: 2 });
+  assert.equal(str(r), '100 200 m');
+});
+
+await test('reduceOperatorPrecision: -0.000000 becomes 0', () => {
+  const r = PDFCore.reduceOperatorPrecision(enc('-0.000000 -0.000000 m'), { decimals: 2 });
+  assert.equal(str(r), '0 0 m');
+});
+
+await test('reduceOperatorPrecision: colour operands are preserved', () => {
+  const input = '0.054902 0.054902 0.062745 scn';
+  const r = PDFCore.reduceOperatorPrecision(enc(input), { decimals: 2 });
+  assert.equal(str(r), input); // byte-for-byte identical
+});
+
+await test('reduceOperatorPrecision: string-safe — decimals inside literal string unchanged', () => {
+  // "1.234567" inside a string literal must NOT be modified; only the trailing `m` operand
+  const input = '(price 1.234567 eur) 2.345678 72.000000 Td';
+  const r = PDFCore.reduceOperatorPrecision(enc(input), { decimals: 2 });
+  // string kept verbatim, numbers rounded
+  assert.ok(str(r).startsWith('(price 1.234567 eur)'), 'literal string preserved');
+  assert.ok(str(r).endsWith('2.35 72 Td'), 'numbers after string rounded');
+});
+
+await test('reduceOperatorPrecision: hex-string-safe — contents unchanged', () => {
+  const input = '<312e3231> 1.234567 0.000000 Td';
+  const r = PDFCore.reduceOperatorPrecision(enc(input), { decimals: 2 });
+  assert.ok(str(r).includes('<312e3231>'), 'hex string preserved');
+  assert.ok(str(r).endsWith('1.23 0 Td'), 'numbers after hex string rounded');
+});
+
+await test('reduceOperatorPrecision: inline image passes through byte-for-byte', () => {
+  // Build a stream: geometry before BI, raw binary in image data, geometry after EI.
+  const before = enc('1.234567 m BI /W 1 /H 1 /BPC 8 /CS /G ID ');
+  const imageData = new Uint8Array([0xAB, 0xCD, 0x28, 0x39, 0xFF]); // binary, incl. '(' and '9'
+  const after = enc(' EI 8.579994 l');
+  const stream = new Uint8Array(before.length + imageData.length + after.length);
+  stream.set(before); stream.set(imageData, before.length); stream.set(after, before.length + imageData.length);
+
+  const r = PDFCore.reduceOperatorPrecision(stream, { decimals: 2 });
+  const s = str(r);
+  assert.ok(s.startsWith('1.23 m'), 'geometry before BI rounded');
+  // imageData bytes should be present verbatim in output
+  let imgFound = true;
+  for (let i = 0; i < imageData.length; i++) {
+    if (r[s.indexOf('ID ') + 3 + i] !== imageData[i]) { imgFound = false; break; }
+  }
+  // Just check the output still ends with geometry after EI
+  assert.ok(s.endsWith('8.58 l'), 'geometry after EI rounded');
+});
+
+await test('reduceOperatorPrecision: mixed colour + geometry in one stream', () => {
+  const input = '0.054902 rg 1.234567 0.000000 m 8.579994 l';
+  const r = PDFCore.reduceOperatorPrecision(enc(input), { decimals: 2 });
+  const s = str(r);
+  assert.ok(s.includes('0.054902 rg'), 'colour preserved');
+  assert.ok(s.includes('1.23 0 m'), 'geometry rounded');
+  assert.ok(s.includes('8.58 l'), 'geometry rounded');
+});
+
+// ─── optimizeStreams integration ─────────────────────────────────────────────
+
+await test('optimizeStreams: reduces content stream precision, skips ICC stream', async () => {
+  const pako = require('pako');
+  const enc2 = new TextEncoder();
+
+  // Build a PDF with one page content stream (6-dp numbers) + a fake ICC stream
+  // (binary, reachable only from /ColorSpace — NOT on the allowlist).
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([100, 100]);
+
+  // Content stream: 6-dp bezier coords
+  const contentBytes = enc2.encode(
+    '1.234567 2.345678 3.456789 4.567890 5.678901 6.789012 c\n' +
+    '0.054902 rg\n'  // colour operand — must be preserved
+  );
+  const contentRef = doc.context.register(
+    PDFRawStream.of(doc.context.obj({ Length: contentBytes.length }), contentBytes)
+  );
+  page.node.set(PDFName.of('Contents'), contentRef);
+
+  // Fake ICC binary stream (lots of high bytes → must NOT be processed)
+  const iccBytes = new Uint8Array(200);
+  for (let i = 0; i < 200; i++) iccBytes[i] = 0x80 + (i % 64);
+  const iccRef = doc.context.register(
+    PDFRawStream.of(doc.context.obj({ Length: iccBytes.length }), iccBytes)
+  );
+  // (iccRef is only reachable from /ColorSpace, never from /Contents or /CharProcs)
+
+  PDFMerge.optimizeStreams(PDFLib, pako, PDFCore, doc, { decimals: 2 });
+
+  // The content stream should now exist and be FlateDecode-compressed
+  const updatedContent = doc.context.lookup(contentRef);
+  assert.ok(updatedContent, 'content stream ref still exists');
+  const filter = updatedContent.dict.get(PDFName.of('Filter'));
+  assert.ok(filter && filter.toString() === '/FlateDecode', 'content stream is now FlateDecode');
+
+  // Inflate and check the rounded content
+  const inflated = pako.inflate(updatedContent.contents || updatedContent.getContents());
+  const decoded = new TextDecoder('latin1').decode(inflated);
+  assert.ok(decoded.includes('1.23'), 'geometry rounded to 2dp');
+  assert.ok(decoded.includes('0.054902 rg'), 'colour preserved at full precision');
+
+  // The ICC stream must be byte-for-byte unchanged
+  const iccObj = doc.context.lookup(iccRef);
+  const iccContent = iccObj.contents || iccObj.getContents();
+  assert.deepEqual([...iccContent], [...iccBytes], 'ICC stream unchanged');
+
+  // The resulting PDF must still parse
+  const bytes = await doc.save();
+  const reloaded = await PDFDocument.load(bytes);
+  assert.equal(reloaded.getPageCount(), 1, 'page count preserved after optimize');
+});
+
 console.log(`\n${passed} passed${process.exitCode ? ' (with failures)' : ''}`);

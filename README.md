@@ -4,6 +4,10 @@ Print-ready PDF export plugin for Figma.
 
 - **RGB** — vector PDF (text/shapes stay crisp), multi-page merge or per-frame ZIP.
   Merged PDFs deduplicate identical fonts/images across pages to keep files small.
+- **Size optimization** *(planned)* — Figma writes coordinates with 6 redundant
+  decimals; rounding them (2 dp default, 1 dp opt-in) and re-deflating shrinks a
+  typical CV by ≈55% — smaller than Ghostscript — with selectable text intact.
+  See [`docs/size-optimization.md`](docs/size-optimization.md).
 - **CMYK** — raster PDF with `DeviceCMYK` images, ink-limit/GCR control, and
   optional JPEG (`DCTDecode`) compression for much smaller files.
 - **PDF/X-1a** — embeds a Coated FOGRA39 OutputIntent for print shops.

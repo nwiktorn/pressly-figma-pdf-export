@@ -563,7 +563,219 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return Uint8Array.from(out);
   }
 
-  return { MM_TO_PT, rgbaToCmyk, assembleCmykPdf, encodeCmykJpeg, pdfDate, pdfTextEscape };
+  // ── Content-stream precision reducer ─────────────────────────────────────────
+
+  // Returns false when bytes clearly cannot be a PDF operator stream:
+  // any NUL byte (binary PDF data) or fewer than 85% printable ASCII + whitespace.
+  function looksLikeOperatorStream(bytes) {
+    for (let i = 0; i < bytes.length; i++) {
+      if (bytes[i] === 0) return false;
+    }
+    if (bytes.length < 16) return true;
+    let ok = 0;
+    for (let i = 0; i < bytes.length; i++) {
+      const b = bytes[i];
+      if (b === 9 || b === 10 || b === 13 || (b >= 32 && b <= 126)) ok++;
+    }
+    return ok / bytes.length >= 0.85;
+  }
+
+  // Advance `pos` past an inline image block (BI…ID…raw binary…EI).
+  // Returns position just after EI, or n if not found.
+  function _skipInlineImage(bytes, pos, n) {
+    function isWS(b) { return b === 0x20 || b === 0x09 || b === 0x0A || b === 0x0D || b === 0x0C; }
+    while (pos < n - 2) {
+      if (isWS(bytes[pos]) && bytes[pos + 1] === 0x49 && bytes[pos + 2] === 0x44 &&
+          (pos + 3 >= n || isWS(bytes[pos + 3]))) {
+        pos += 3;                                         // skip ws + 'I' + 'D'
+        if (pos < n && isWS(bytes[pos])) pos++;           // skip 1-byte separator
+        while (pos < n) {
+          if (pos > 0 && isWS(bytes[pos - 1]) &&
+              bytes[pos] === 0x45 && pos + 1 < n && bytes[pos + 1] === 0x49 &&
+              (pos + 2 >= n || isWS(bytes[pos + 2]))) {
+            return pos + 2;                               // after 'EI'
+          }
+          pos++;
+        }
+        return n;
+      }
+      pos++;
+    }
+    return n;
+  }
+
+  // Operator-aware precision reducer for a decoded PDF content stream.
+  //
+  // Tokenizes `bytes` per ISO 32000 §7.8.2 grammar. Rewrites only the numeric
+  // operands of geometry/text operators to `opts.decimals` decimal places.
+  // Everything else — literal strings (…), hex strings <…>, names /…, comments
+  // %…, dicts << >>, inline images BI…ID…EI, colour-operator operands, and any
+  // unrecognised token — is emitted byte-for-byte unchanged.
+  //   bytes   Uint8Array of the DECODED (inflated) stream
+  //   opts    { decimals: number }
+  function reduceOperatorPrecision(bytes, opts) {
+    const decimals = opts && opts.decimals != null ? opts.decimals : 2;
+
+    const COLOUR = new Set(['g','G','rg','RG','k','K','sc','scn','SC','SCN','cs','CS']);
+    const REDUCE = new Set([
+      'm','l','c','v','y','re','h',                   // path construction
+      'cm','w','M','J','j','i','d',                   // graphics state (numeric params)
+      'Td','TD','Tm','Tc','Tw','Tz','TL','Ts','Tr','Tf', // text state & positioning
+    ]);
+
+    function isWS(b) {
+      return b === 0x20 || b === 0x09 || b === 0x0A || b === 0x0D || b === 0x0C;
+    }
+
+    function bstr(from, to) {
+      let s = '';
+      for (let i = from; i < to; i++) s += String.fromCharCode(bytes[i]);
+      return s;
+    }
+
+    function roundNum(str, d) {
+      if (str.indexOf('.') === -1) return str;          // integer — untouched
+      const v = parseFloat(str);
+      if (!isFinite(v)) return str;
+      const factor = Math.pow(10, d);
+      const r = (v < 0 ? -1 : 1) * Math.round(Math.abs(v) * factor) / factor;
+      let s = r.toFixed(d).replace(/\.?0+$/, '');
+      return s === '-0' || s === '' ? '0' : s;
+    }
+
+    function strBytes(s) {
+      const b = new Uint8Array(s.length);
+      for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+      return b;
+    }
+
+    const chunks = [];
+    let lastCopied = 0, pos = 0;
+    const n = bytes.length;
+    let pending = [];  // {start, end, str}[] — nums buffered since last operator
+
+    function pushRange(from, to) {
+      if (to > from) chunks.push(bytes.subarray(from, to));
+    }
+
+    // Flush the buffered number tokens. If `reduce`, rewrite them; else keep verbatim.
+    function flushPending(reduce) {
+      if (reduce) {
+        for (const { start, end, str } of pending) {
+          pushRange(lastCopied, start);
+          chunks.push(strBytes(roundNum(str, decimals)));
+          lastCopied = end;
+        }
+      }
+      pending = [];
+    }
+
+    while (pos < n) {
+      const c = bytes[pos];
+
+      if (isWS(c)) { pos++; continue; }
+
+      if (c === 0x25) {                                 // comment % to EOL
+        while (pos < n && bytes[pos] !== 0x0A && bytes[pos] !== 0x0D) pos++;
+        continue;                                        // comments don't reset operand run
+      }
+
+      if (c === 0x28) {                                 // literal string (…)
+        pos++;
+        let depth = 1;
+        while (pos < n && depth > 0) {
+          const b = bytes[pos++];
+          if (b === 0x5C) pos++;                        // backslash escape: skip next byte
+          else if (b === 0x28) depth++;
+          else if (b === 0x29) depth--;
+        }
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x3C) {                                 // << or <hex string>
+        if (pos + 1 < n && bytes[pos + 1] === 0x3C) { pos += 2; pending = []; continue; }
+        pos++;
+        while (pos < n && bytes[pos] !== 0x3E) pos++;
+        if (pos < n) pos++;
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x3E) {                                 // > or >>
+        if (pos + 1 < n && bytes[pos + 1] === 0x3E) pos++;
+        pos++;
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x2F) {                                 // name /…
+        pos++;
+        while (pos < n) {
+          const b = bytes[pos];
+          if (isWS(b) || b === 0x2F || b === 0x28 || b === 0x29 ||
+              b === 0x3C || b === 0x3E || b === 0x5B || b === 0x5D ||
+              b === 0x7B || b === 0x7D || b === 0x25) break;
+          pos += b === 0x23 ? 3 : 1;                    // #xx hex escape counts as 3
+        }
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x5B || c === 0x5D || c === 0x7B || c === 0x7D) { // [ ] { }
+        pos++;
+        pending = [];
+        continue;
+      }
+
+      // Number: [+-]?(\d+\.?\d*|\.d+)
+      if ((c >= 0x30 && c <= 0x39) || c === 0x2E ||
+          ((c === 0x2B || c === 0x2D) && pos + 1 < n &&
+           (bytes[pos + 1] >= 0x30 && bytes[pos + 1] <= 0x39 || bytes[pos + 1] === 0x2E))) {
+        const start = pos;
+        if (c === 0x2B || c === 0x2D) pos++;
+        while (pos < n && bytes[pos] >= 0x30 && bytes[pos] <= 0x39) pos++;
+        if (pos < n && bytes[pos] === 0x2E) {
+          pos++;
+          while (pos < n && bytes[pos] >= 0x30 && bytes[pos] <= 0x39) pos++;
+        }
+        if (pos > start) pending.push({ start, end: pos, str: bstr(start, pos) });
+        continue;
+      }
+
+      // Keyword / operator: [A-Za-z'"*]+
+      if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A) || c === 0x27 || c === 0x22) {
+        const kwStart = pos;
+        while (pos < n) {
+          const b = bytes[pos];
+          if ((b >= 0x41 && b <= 0x5A) || (b >= 0x61 && b <= 0x7A) ||
+              b === 0x2A || b === 0x27 || b === 0x22) pos++;
+          else break;
+        }
+        const kw = bstr(kwStart, pos);
+        if (kw === 'BI') {
+          pending = [];
+          pos = _skipInlineImage(bytes, pos, n);        // copy BI…EI verbatim
+          continue;
+        }
+        flushPending(REDUCE.has(kw));
+        continue;
+      }
+
+      pos++;                                             // unknown byte — skip
+    }
+
+    pushRange(lastCopied, n);
+
+    let total = 0;
+    for (const ch of chunks) total += ch.length;
+    const result = new Uint8Array(total);
+    let off = 0;
+    for (const ch of chunks) { result.set(ch, off); off += ch.length; }
+    return result;
+  }
+
+  return { MM_TO_PT, rgbaToCmyk, assembleCmykPdf, encodeCmykJpeg, pdfDate, pdfTextEscape, looksLikeOperatorStream, reduceOperatorPrecision };
 });
 </script>
 <!-- pdf-merge -->
@@ -657,7 +869,145 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     return remap.size;
   }
 
-  return { dedupeStreams };
+  // Walk the page resources to collect refs for Type3 CharProcs and Form XObjects.
+  function _walkResources(PDFLib, ctx, resVal, allowed) {
+    const { PDFName, PDFRef, PDFArray } = PDFLib;
+    const res = (resVal instanceof PDFRef) ? ctx.lookup(resVal) : resVal;
+    if (!res || typeof res.get !== 'function') return;
+
+    const fontDictRaw = res.get(PDFName.of('Font'));
+    const fontDict = (fontDictRaw instanceof PDFRef) ? ctx.lookup(fontDictRaw) : fontDictRaw;
+    if (fontDict && typeof fontDict.entries === 'function') {
+      for (const [, fv] of fontDict.entries()) {
+        const fobj = (fv instanceof PDFRef) ? ctx.lookup(fv) : fv;
+        if (!fobj || typeof fobj.get !== 'function') continue;
+        const sub = fobj.get(PDFName.of('Subtype'));
+        if (sub && sub.toString() === '/Type3') {
+          const cpRaw = fobj.get(PDFName.of('CharProcs'));
+          const cp = (cpRaw instanceof PDFRef) ? ctx.lookup(cpRaw) : cpRaw;
+          if (cp && typeof cp.entries === 'function') {
+            for (const [, cv] of cp.entries()) {
+              if (cv instanceof PDFRef) allowed.add(cv.tag);
+            }
+          }
+        }
+      }
+    }
+
+    const xoDictRaw = res.get(PDFName.of('XObject'));
+    const xoDict = (xoDictRaw instanceof PDFRef) ? ctx.lookup(xoDictRaw) : xoDictRaw;
+    if (xoDict && typeof xoDict.entries === 'function') {
+      for (const [, xv] of xoDict.entries()) {
+        const xobj = (xv instanceof PDFRef) ? ctx.lookup(xv) : xv;
+        if (!xobj || typeof xobj.get !== 'function') continue;
+        const sub = xobj.get(PDFName.of('Subtype'));
+        if (sub && sub.toString() === '/Form') {
+          if (xv instanceof PDFRef) allowed.add(xv.tag);
+          _walkResources(PDFLib, ctx, xobj.get(PDFName.of('Resources')), allowed);
+        }
+      }
+    }
+  }
+
+  // Walk the document structure and collect refs that are safe to process as
+  // operator streams: page /Contents, Type3 /CharProcs, Form XObjects.
+  // Everything else (images, ICC profiles, metadata, font data) is excluded.
+  function _collectAllowedRefs(PDFLib, ctx, doc) {
+    const { PDFName, PDFRef, PDFArray } = PDFLib;
+    const allowed = new Set();
+
+    function addContents(val) {
+      if (!val) return;
+      const obj = (val instanceof PDFRef) ? ctx.lookup(val) : val;
+      if (val instanceof PDFRef) {
+        if (obj instanceof PDFArray) {
+          for (let i = 0; i < obj.size(); i++) {
+            const item = obj.get(i);
+            if (item instanceof PDFRef) allowed.add(item.tag);
+          }
+        } else {
+          allowed.add(val.tag);  // ref points directly to a stream
+        }
+      } else if (val instanceof PDFArray) {
+        for (let i = 0; i < val.size(); i++) {
+          const item = val.get(i);
+          if (item instanceof PDFRef) allowed.add(item.tag);
+        }
+      }
+    }
+
+    for (const page of doc.getPages()) {
+      const node = page.node;
+      addContents(node.get(PDFName.of('Contents')));
+      _walkResources(PDFLib, ctx, node.get(PDFName.of('Resources')), allowed);
+    }
+
+    return allowed;
+  }
+
+  // Reduce coordinate precision in all operator streams of `doc`, then re-deflate
+  // at zlib level 9. Only processes streams on an explicit allowlist built by
+  // walking the document structure (page /Contents, Type3 /CharProcs, Form
+  // XObjects). Binary streams such as ICC profiles or image data are never touched.
+  //   PDFLib   pdf-lib module (injected)
+  //   pako     pako module (injected)
+  //   PDFCore  pdf-core.js module (injected; provides reduceOperatorPrecision)
+  //   doc      PDFDocument instance to modify in place
+  //   opts     { decimals: number }  — 2 = standard, 1 = maximum
+  function optimizeStreams(PDFLib, pako, PDFCore, doc, opts) {
+    const decimals = opts && opts.decimals != null ? opts.decimals : 2;
+    const { PDFName, PDFNumber, PDFRawStream, PDFStream } = PDFLib;
+    const ctx = doc.context;
+
+    const allowed = _collectAllowedRefs(PDFLib, ctx, doc);
+    let processed = 0, bytesSaved = 0;
+
+    for (const [ref, obj] of ctx.enumerateIndirectObjects()) {
+      if (!allowed.has(ref.tag)) continue;
+      if (!(obj instanceof PDFStream)) continue;
+
+      const raw = streamContents(obj);
+      if (!raw || !raw.length) continue;
+
+      const filterVal = obj.dict.get(PDFName.of('Filter'));
+      let decoded;
+      try {
+        if (!filterVal) {
+          decoded = raw;
+        } else if (filterVal.toString() === '/FlateDecode') {
+          decoded = pako.inflate(raw);
+        } else {
+          continue;                 // other filter (LZW etc.) — skip safely
+        }
+      } catch (e) { continue; }
+
+      if (!PDFCore.looksLikeOperatorStream(decoded)) continue;
+
+      let reduced;
+      try { reduced = PDFCore.reduceOperatorPrecision(decoded, { decimals }); }
+      catch (e) { continue; }
+
+      const deflated = pako.deflate(reduced, { level: 9 });
+
+      // Build a new stream dict: copy all keys except Filter / Length / DecodeParms,
+      // then set the new values.
+      const newDict = ctx.obj({});
+      for (const [k, v] of obj.dict.entries()) {
+        const ks = k.toString();
+        if (ks !== '/Filter' && ks !== '/Length' && ks !== '/DecodeParms') newDict.set(k, v);
+      }
+      newDict.set(PDFName.of('Filter'), PDFName.of('FlateDecode'));
+      newDict.set(PDFName.of('Length'), PDFNumber.of(deflated.length));
+      ctx.assign(ref, PDFRawStream.of(newDict, deflated));
+
+      bytesSaved += raw.length - deflated.length;
+      processed++;
+    }
+
+    return { processed, bytesSaved };
+  }
+
+  return { dedupeStreams, optimizeStreams };
 });
 </script>
 <!-- bundled ICC: Coated FOGRA39 (ISO 12647-2:2004) -->
@@ -953,6 +1303,19 @@ input[type=range] { accent-color: var(--accent); }
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <span><b>CMYK raster</b> — tekst nie będzie zaznaczalny. Przeznaczony do drukarni offsetowych.</span>
       </div>
+      <!-- OPTIMIZE (sRGB only) -->
+      <div id="optimizeCard" style="border-top:1px solid var(--border);padding:12px 0 0">
+        <div class="eyebrow" style="margin-bottom:8px">Rozmiar pliku PDF</div>
+        <div class="pills" id="optimizeGroup">
+          <button class="pill" data-opt="off"><b>Wył.</b><span>oryginalny</span></button>
+          <button class="pill on" data-opt="standard"><b>Standardowa</b><span>≈ −55%, 2 dp</span></button>
+          <button class="pill" data-opt="max"><b>Maksymalna</b><span>≈ −67%, 1 dp</span></button>
+        </div>
+        <div class="banner warn hidden" id="bannerOptMax" style="margin-top:8px">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>Maksymalna kompresja zaokrągla geometrię do ~0.035 mm. Plik jest najmniejszy, ale drobne elementy mogą się minimalnie zmienić — sprawdź podgląd przed wysłaniem.</span>
+        </div>
+      </div>
       <!-- QUALITY (CMYK only, inline) -->
       <div class="hidden" id="qualityCard" style="margin-top:0;border-top:1px solid var(--border);padding:12px 0 0">
         <div class="eyebrow" style="margin-bottom:8px">Jakość eksportu</div>
@@ -1041,7 +1404,7 @@ input[type=range] { accent-color: var(--accent); }
 <script>
 // ─── State ───────────────────────────────────────────────────────────────────
 let frames = [];
-const S = { mode: 'multi', profile: 'rgb', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false, compression: 'flate', jpegQuality: 85 };
+const S = { mode: 'multi', profile: 'rgb', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false, compression: 'flate', jpegQuality: 85, optimize: 'standard' };
 
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -1063,6 +1426,7 @@ document.querySelectorAll('input[name="profile"]').forEach(r => r.addEventListen
   $('bannerRGB').classList.toggle('hidden', S.profile !== 'rgb');
   $('bannerCMYK').classList.toggle('hidden', S.profile !== 'cmyk');
   $('qualityCard').classList.toggle('hidden', S.profile !== 'cmyk');
+  $('optimizeCard').classList.toggle('hidden', S.profile !== 'rgb');
 }));
 
 // ─── DPI pills ────────────────────────────────────────────────────────────────
@@ -1073,6 +1437,14 @@ $('dpiGroup').addEventListener('click', e => {
   document.querySelectorAll('#dpiGroup .pill').forEach(p => p.classList.remove('on'));
   pill.classList.add('on');
   updateDpiReadout();
+});
+
+$('optimizeGroup').addEventListener('click', e => {
+  const pill = e.target.closest('[data-opt]');
+  if (!pill) return;
+  S.optimize = pill.dataset.opt;
+  document.querySelectorAll('#optimizeGroup .pill').forEach(p => p.classList.toggle('on', p === pill));
+  $('bannerOptMax').classList.toggle('hidden', S.optimize !== 'max');
 });
 
 // ─── Collapsible cards ────────────────────────────────────────────────────────
@@ -1197,6 +1569,7 @@ function collectSettings() {
     bleed: S.bleed, bleedMm: S.bleedMm, cropMarks: S.cropMarks,
     whiteBg: S.whiteBg, inkLimit: S.inkLimit, pdfx: S.pdfx,
     compression: S.compression, jpegQuality: S.jpegQuality,
+    optimize: S.optimize,
     filename: $('filename').value, metaTitle: $('metaTitle').value, metaAuthor: $('metaAuthor').value,
   };
 }
@@ -1228,6 +1601,10 @@ function applySettings(s) {
   if (s.inkLimit != null) { $('inkLimit').value = s.inkLimit; fire($('inkLimit'), 'input'); }
   if (s.compression) { $('compression').value = s.compression; fire($('compression'), 'change'); }
   if (s.jpegQuality != null) { $('jpegQuality').value = s.jpegQuality; fire($('jpegQuality'), 'input'); }
+  if (s.optimize != null) {
+    const p = document.querySelector(`#optimizeGroup [data-opt="${s.optimize}"]`);
+    if (p) p.click();
+  }
   if (s.filename != null) $('filename').value = s.filename;
   if (s.metaTitle != null) $('metaTitle').value = s.metaTitle;
   if (s.metaAuthor != null) $('metaAuthor').value = s.metaAuthor;
@@ -1383,8 +1760,14 @@ async function buildMergedRgbPdf(data) {
     const pages = await merged.copyPages(src, [...Array(src.getPageCount()).keys()]);
     pages.forEach(p => { merged.addPage(p); if (S.cropMarks || S.bleed) addCropMarksRgb(p); });
   }
+  if (S.optimize !== 'off') {
+    const decimals = S.optimize === 'max' ? 1 : 2;
+    PDFMerge.optimizeStreams(PDFLib, self.pako, PDFCore, merged, { decimals });
+  }
   // Collapse identical fonts/images duplicated across pages (big win for
   // multi-page CVs where the same font would otherwise be stored per page).
+  // Run after optimizeStreams so precision-reduced glyph streams that become
+  // byte-identical can be deduplicated.
   PDFMerge.dedupeStreams(PDFLib, merged);
   return merged.save();
 }
@@ -1396,6 +1779,10 @@ async function buildSingleRgbPdf(bytes) {
   setMeta(doc);
   const pages = await doc.copyPages(src, [...Array(src.getPageCount()).keys()]);
   pages.forEach(p => { doc.addPage(p); if (S.cropMarks || S.bleed) addCropMarksRgb(p); });
+  if (S.optimize !== 'off') {
+    const decimals = S.optimize === 'max' ? 1 : 2;
+    PDFMerge.optimizeStreams(PDFLib, self.pako, PDFCore, doc, { decimals });
+  }
   return doc.save();
 }
 

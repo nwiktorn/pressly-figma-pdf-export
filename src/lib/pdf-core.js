@@ -517,5 +517,217 @@
     return Uint8Array.from(out);
   }
 
-  return { MM_TO_PT, rgbaToCmyk, assembleCmykPdf, encodeCmykJpeg, pdfDate, pdfTextEscape };
+  // ── Content-stream precision reducer ─────────────────────────────────────────
+
+  // Returns false when bytes clearly cannot be a PDF operator stream:
+  // any NUL byte (binary PDF data) or fewer than 85% printable ASCII + whitespace.
+  function looksLikeOperatorStream(bytes) {
+    for (let i = 0; i < bytes.length; i++) {
+      if (bytes[i] === 0) return false;
+    }
+    if (bytes.length < 16) return true;
+    let ok = 0;
+    for (let i = 0; i < bytes.length; i++) {
+      const b = bytes[i];
+      if (b === 9 || b === 10 || b === 13 || (b >= 32 && b <= 126)) ok++;
+    }
+    return ok / bytes.length >= 0.85;
+  }
+
+  // Advance `pos` past an inline image block (BI…ID…raw binary…EI).
+  // Returns position just after EI, or n if not found.
+  function _skipInlineImage(bytes, pos, n) {
+    function isWS(b) { return b === 0x20 || b === 0x09 || b === 0x0A || b === 0x0D || b === 0x0C; }
+    while (pos < n - 2) {
+      if (isWS(bytes[pos]) && bytes[pos + 1] === 0x49 && bytes[pos + 2] === 0x44 &&
+          (pos + 3 >= n || isWS(bytes[pos + 3]))) {
+        pos += 3;                                         // skip ws + 'I' + 'D'
+        if (pos < n && isWS(bytes[pos])) pos++;           // skip 1-byte separator
+        while (pos < n) {
+          if (pos > 0 && isWS(bytes[pos - 1]) &&
+              bytes[pos] === 0x45 && pos + 1 < n && bytes[pos + 1] === 0x49 &&
+              (pos + 2 >= n || isWS(bytes[pos + 2]))) {
+            return pos + 2;                               // after 'EI'
+          }
+          pos++;
+        }
+        return n;
+      }
+      pos++;
+    }
+    return n;
+  }
+
+  // Operator-aware precision reducer for a decoded PDF content stream.
+  //
+  // Tokenizes `bytes` per ISO 32000 §7.8.2 grammar. Rewrites only the numeric
+  // operands of geometry/text operators to `opts.decimals` decimal places.
+  // Everything else — literal strings (…), hex strings <…>, names /…, comments
+  // %…, dicts << >>, inline images BI…ID…EI, colour-operator operands, and any
+  // unrecognised token — is emitted byte-for-byte unchanged.
+  //   bytes   Uint8Array of the DECODED (inflated) stream
+  //   opts    { decimals: number }
+  function reduceOperatorPrecision(bytes, opts) {
+    const decimals = opts && opts.decimals != null ? opts.decimals : 2;
+
+    const COLOUR = new Set(['g','G','rg','RG','k','K','sc','scn','SC','SCN','cs','CS']);
+    const REDUCE = new Set([
+      'm','l','c','v','y','re','h',                   // path construction
+      'cm','w','M','J','j','i','d',                   // graphics state (numeric params)
+      'Td','TD','Tm','Tc','Tw','Tz','TL','Ts','Tr','Tf', // text state & positioning
+    ]);
+
+    function isWS(b) {
+      return b === 0x20 || b === 0x09 || b === 0x0A || b === 0x0D || b === 0x0C;
+    }
+
+    function bstr(from, to) {
+      let s = '';
+      for (let i = from; i < to; i++) s += String.fromCharCode(bytes[i]);
+      return s;
+    }
+
+    function roundNum(str, d) {
+      if (str.indexOf('.') === -1) return str;          // integer — untouched
+      const v = parseFloat(str);
+      if (!isFinite(v)) return str;
+      const factor = Math.pow(10, d);
+      const r = (v < 0 ? -1 : 1) * Math.round(Math.abs(v) * factor) / factor;
+      let s = r.toFixed(d).replace(/\.?0+$/, '');
+      return s === '-0' || s === '' ? '0' : s;
+    }
+
+    function strBytes(s) {
+      const b = new Uint8Array(s.length);
+      for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+      return b;
+    }
+
+    const chunks = [];
+    let lastCopied = 0, pos = 0;
+    const n = bytes.length;
+    let pending = [];  // {start, end, str}[] — nums buffered since last operator
+
+    function pushRange(from, to) {
+      if (to > from) chunks.push(bytes.subarray(from, to));
+    }
+
+    // Flush the buffered number tokens. If `reduce`, rewrite them; else keep verbatim.
+    function flushPending(reduce) {
+      if (reduce) {
+        for (const { start, end, str } of pending) {
+          pushRange(lastCopied, start);
+          chunks.push(strBytes(roundNum(str, decimals)));
+          lastCopied = end;
+        }
+      }
+      pending = [];
+    }
+
+    while (pos < n) {
+      const c = bytes[pos];
+
+      if (isWS(c)) { pos++; continue; }
+
+      if (c === 0x25) {                                 // comment % to EOL
+        while (pos < n && bytes[pos] !== 0x0A && bytes[pos] !== 0x0D) pos++;
+        continue;                                        // comments don't reset operand run
+      }
+
+      if (c === 0x28) {                                 // literal string (…)
+        pos++;
+        let depth = 1;
+        while (pos < n && depth > 0) {
+          const b = bytes[pos++];
+          if (b === 0x5C) pos++;                        // backslash escape: skip next byte
+          else if (b === 0x28) depth++;
+          else if (b === 0x29) depth--;
+        }
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x3C) {                                 // << or <hex string>
+        if (pos + 1 < n && bytes[pos + 1] === 0x3C) { pos += 2; pending = []; continue; }
+        pos++;
+        while (pos < n && bytes[pos] !== 0x3E) pos++;
+        if (pos < n) pos++;
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x3E) {                                 // > or >>
+        if (pos + 1 < n && bytes[pos + 1] === 0x3E) pos++;
+        pos++;
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x2F) {                                 // name /…
+        pos++;
+        while (pos < n) {
+          const b = bytes[pos];
+          if (isWS(b) || b === 0x2F || b === 0x28 || b === 0x29 ||
+              b === 0x3C || b === 0x3E || b === 0x5B || b === 0x5D ||
+              b === 0x7B || b === 0x7D || b === 0x25) break;
+          pos += b === 0x23 ? 3 : 1;                    // #xx hex escape counts as 3
+        }
+        pending = [];
+        continue;
+      }
+
+      if (c === 0x5B || c === 0x5D || c === 0x7B || c === 0x7D) { // [ ] { }
+        pos++;
+        pending = [];
+        continue;
+      }
+
+      // Number: [+-]?(\d+\.?\d*|\.d+)
+      if ((c >= 0x30 && c <= 0x39) || c === 0x2E ||
+          ((c === 0x2B || c === 0x2D) && pos + 1 < n &&
+           (bytes[pos + 1] >= 0x30 && bytes[pos + 1] <= 0x39 || bytes[pos + 1] === 0x2E))) {
+        const start = pos;
+        if (c === 0x2B || c === 0x2D) pos++;
+        while (pos < n && bytes[pos] >= 0x30 && bytes[pos] <= 0x39) pos++;
+        if (pos < n && bytes[pos] === 0x2E) {
+          pos++;
+          while (pos < n && bytes[pos] >= 0x30 && bytes[pos] <= 0x39) pos++;
+        }
+        if (pos > start) pending.push({ start, end: pos, str: bstr(start, pos) });
+        continue;
+      }
+
+      // Keyword / operator: [A-Za-z'"*]+
+      if ((c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A) || c === 0x27 || c === 0x22) {
+        const kwStart = pos;
+        while (pos < n) {
+          const b = bytes[pos];
+          if ((b >= 0x41 && b <= 0x5A) || (b >= 0x61 && b <= 0x7A) ||
+              b === 0x2A || b === 0x27 || b === 0x22) pos++;
+          else break;
+        }
+        const kw = bstr(kwStart, pos);
+        if (kw === 'BI') {
+          pending = [];
+          pos = _skipInlineImage(bytes, pos, n);        // copy BI…EI verbatim
+          continue;
+        }
+        flushPending(REDUCE.has(kw));
+        continue;
+      }
+
+      pos++;                                             // unknown byte — skip
+    }
+
+    pushRange(lastCopied, n);
+
+    let total = 0;
+    for (const ch of chunks) total += ch.length;
+    const result = new Uint8Array(total);
+    let off = 0;
+    for (const ch of chunks) { result.set(ch, off); off += ch.length; }
+    return result;
+  }
+
+  return { MM_TO_PT, rgbaToCmyk, assembleCmykPdf, encodeCmykJpeg, pdfDate, pdfTextEscape, looksLikeOperatorStream, reduceOperatorPrecision };
 });
