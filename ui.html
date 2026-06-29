@@ -1137,7 +1137,9 @@ html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var
 .frow input { width: 16px; height: 16px; flex: none; accent-color: var(--accent); cursor: pointer; }
 .frame-thumb { width: 34px; height: 34px; border-radius: 7px; flex: none; border: 1px solid var(--border-2); background: repeating-conic-gradient(#eef0f7 0% 25%, #f7f8fc 0% 50%) 0/12px 12px center/contain no-repeat; }
 .frame-thumb.loaded { border-color: transparent; background-color: transparent; }
-.frame-name { flex: 1; font-size: 12.5px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.frame-name { font-size: 12.5px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame-section { font-size: 10.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .frame-dims { font-size: 11px; color: var(--faint); font-family: var(--mono); white-space: nowrap; }
 .empty-state { text-align: center; padding: 30px 16px; color: var(--faint); font-size: 12px; }
 
@@ -1924,7 +1926,8 @@ function renderFrames() {
     const selected = initialSelectedIds.has(f.id);
     el.className = 'frow' + (selected ? ' checked' : '');
     el.dataset.id = f.id;
-    el.innerHTML = `<input type="checkbox" ${selected ? 'checked' : ''}><span class="frame-thumb" data-thumb="${f.id}" style="background-size:contain;background-position:center;background-repeat:no-repeat"></span><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
+    const section = f.sectionName ? `<span class="frame-section">${esc(f.sectionName)}</span>` : '';
+    el.innerHTML = `<input type="checkbox" ${selected ? 'checked' : ''}><span class="frame-thumb" data-thumb="${f.id}" style="background-size:contain;background-position:center;background-repeat:no-repeat"></span><span class="frame-copy"><span class="frame-name">${esc(f.name)}</span>${section}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
     const thumbUrl = thumbUrls.get(f.id);
     if (thumbUrl) {
       const thumb = el.querySelector('.frame-thumb');

@@ -139,9 +139,14 @@ All UI state is the `S` object in `src/ui.html`.
 
 ### Quality of life
 - **Frame thumbnails** in the list.
+- **Recursive frame discovery inside sections**: `code.js` walks the current page
+  tree and exports `FRAME`/`COMPONENT` nodes as individual pages. `SECTION` is an
+  organizational container only; selecting a section selects all exportable
+  frames/components inside it for the initial plugin state.
 - **Initial selection mirrors Figma**: all exportable frames are shown, but only
-  frames selected on the current Figma page start checked. If nothing exportable
-  was selected in Figma, the plugin starts with all frames unchecked.
+  frames selected on the current Figma page start checked. If a section was
+  selected, nested exportable frames/components start checked. If nothing
+  exportable was selected in Figma, the plugin starts with all frames unchecked.
 - **Page ordering panel** for merged PDFs: when more than one frame is selected in
   `Jeden PDF` mode, a left-column `Kolejność stron` panel appears under the
   frame list. It mirrors selected frames, uses drag-and-drop insertion indicators

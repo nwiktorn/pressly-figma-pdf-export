@@ -1,4 +1,5 @@
-const EXPORTABLE = ['FRAME', 'COMPONENT', 'SECTION'];
+const EXPORTABLE = ['FRAME', 'COMPONENT'];
+const WALKABLE = ['FRAME', 'COMPONENT', 'SECTION', 'GROUP', 'INSTANCE'];
 const SETTINGS_KEY = 'pressly-pdf-export-settings';
 const THUMB_WIDTH = 64; // px wide preview per frame
 
@@ -6,21 +7,35 @@ let cachedSettings = null;
 
 figma.showUI(__html__, { width: 900, height: 660, title: 'Pressly - PDF Export' });
 
+function frameInfo(node, sectionName = '') {
+  return {
+    id: node.id,
+    name: node.name,
+    sectionName,
+    width: Math.round(node.width),
+    height: Math.round(node.height),
+  };
+}
+
+function collectExportableFrames(nodes, out = [], sectionName = '') {
+  for (const node of nodes) {
+    const nextSectionName = node.type === 'SECTION' ? node.name : sectionName;
+    if (EXPORTABLE.includes(node.type)) {
+      out.push(frameInfo(node, sectionName));
+    }
+    if (WALKABLE.includes(node.type) && node.children && node.children.length) {
+      collectExportableFrames(node.children, out, nextSectionName);
+    }
+  }
+  return out;
+}
+
 function getFrames() {
-  return figma.currentPage.children
-    .filter(n => EXPORTABLE.includes(n.type))
-    .map(n => ({
-      id: n.id,
-      name: n.name,
-      width: Math.round(n.width),
-      height: Math.round(n.height),
-    }));
+  return collectExportableFrames(figma.currentPage.children);
 }
 
 function getSelectedFrameIds() {
-  return figma.currentPage.selection
-    .filter(n => EXPORTABLE.includes(n.type))
-    .map(n => n.id);
+  return collectExportableFrames(figma.currentPage.selection).map(n => n.id);
 }
 
 // Send small PNG previews lazily so the list renders instantly, then fills in.
