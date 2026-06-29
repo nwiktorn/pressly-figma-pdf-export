@@ -269,7 +269,7 @@ No new inject markers. After edits: `npm run build` to regenerate `ui.html`, the
 - [x] `reduceOperatorPrecision` (tokenizer, operator-aware) + `looksLikeOperatorStream` in `pdf-core.js`
 - [x] `optimizeStreams` (allowlist gating) in `pdf-merge.js`
 - [x] Wire into `buildMergedRgbPdf` / `buildSingleRgbPdf`
-- [x] UI control (off / 2 dp / 1 dp) + 1 dp warning + persistence
+- [x] UI control via shared quality presets (highest = off, medium = 2 dp, low = 1 dp) + persistence
 - [x] Tests (tokenizer: strings/hex/inline-image/colour-preserve/binary-reject + end-to-end optimize) — 13 new tests, 31 total
-- [x] `npm run build` ✓ · `npm test` 31/31 ✓ · manual Figma check — done; surfaced `pako is not defined` (Figma sandbox does not expose pako as a bare global); fixed by using `self.pako` at both call sites in `src/ui.html`
+- [x] `npm run build` ✓ · `npm test` 31/31 ✓ · manual Figma check — done; surfaced `pako` global/build-injection issues; fixed with `getPako()` / `resolvePako()` and replacement callbacks in `build.mjs`
 - [x] Update AGENTS.md §5/§6/§7/§8 — done

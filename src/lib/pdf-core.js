@@ -7,10 +7,24 @@
 // Nothing here touches the DOM — inputs are plain typed arrays / numbers — which
 // is what makes it unit-testable in Node without Figma or a browser.
 (function (root, factory) {
+  function resolvePako(root) {
+    const roots = [root];
+    if (typeof globalThis !== 'undefined') roots.push(globalThis);
+    if (typeof self !== 'undefined') roots.push(self);
+    if (typeof window !== 'undefined') roots.push(window);
+
+    for (let i = 0; i < roots.length; i++) {
+      const z = roots[i] && roots[i].pako;
+      const mod = z && z.default && typeof z.default.deflate === 'function' ? z.default : z;
+      if (mod && typeof mod.deflate === 'function' && typeof mod.inflate === 'function') return mod;
+    }
+    return null;
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = factory(require('pako'));
   } else {
-    root.PDFCore = factory(root.pako);
+    root.PDFCore = factory(resolvePako(root));
   }
 })(typeof self !== 'undefined' ? self : this, function (pako) {
   'use strict';

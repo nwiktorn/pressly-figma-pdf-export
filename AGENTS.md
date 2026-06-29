@@ -126,14 +126,23 @@ All UI state is the `S` object in `src/ui.html`.
   embedded. ICC is embedded **only** when PDF/X is on (keeps plain CMYK small).
 - **Compression**: `flate` (lossless) or `jpeg` (`DCTDecode`) + quality slider.
 
-### Resolution clarity
-- **DPI readout** under the DPI selector (CMYK card): `DPI = 96 × scale`
-  (the plugin treats 96 px = 1 inch). Shows source px → output px and physical
-  size in mm for the selected frame. RGB banner states vector = DPI-independent.
-- Scale pills map to 96/192/288/384 DPI; Figma caps export at 4×.
+### Quality presets and resolution clarity
+- **Jakość PDF** is a single three-option preset panel shared by RGB and CMYK:
+  low / medium / highest.
+- RGB presets map to stream precision: low = `optimize: "max"` (1 dp), medium =
+  `optimize: "standard"` (2 dp), highest = `optimize: "off"`.
+- CMYK presets map to raster output: low = 192 DPI JPEG 70, medium = 288 DPI JPEG
+  85, highest = 384 DPI Flate. The plugin treats 96 px = 1 inch, so
+  `DPI = 96 × scale`; Figma caps export at 4×.
+- The CMYK details area still shows the DPI readout and physical size for the
+  selected frame, plus ink limit and PDF/X toggles.
 
 ### Quality of life
 - **Frame thumbnails** in the list.
+- **Page ordering panel** for merged PDFs: when more than one frame is selected in
+  `Jeden PDF` mode, a left-column `Kolejność stron` panel appears under the
+  frame list. It mirrors selected frames, uses drag-and-drop to mutate `pageOrder`,
+  and `getSelectedIds()` exports using that order.
 - **Settings persistence** via `clientStorage` (`collectSettings`/`applySettings`;
   applySettings drives the real controls so dependent UI updates).
 - **Filename templates**: `{name} {index} {date} {time} {w} {h}`; auto per-file
@@ -186,13 +195,15 @@ All UI state is the `S` object in `src/ui.html`.
   images `BI…ID…EI` (raw binary)** are passed through untouched. Reduce only
   geometry/text operands; **keep colour operands** (avoid banding — they're ~3 KB
   anyway). Full rationale + measurements in `docs/size-optimization.md`.
-- **`pako` is not a bare global in Figma's sandbox.** pako 2.x registers on
-  `self.pako` / `globalThis.pako`, but Figma's plugin iframe does not make that
-  accessible as the bare name `pako` in the main `<script>` block. In `pdf-core.js`
-  pako is injected via the UMD factory parameter (`root.pako`), which works. In the
-  call sites in `src/ui.html` always use `self.pako` explicitly:
-  `PDFMerge.optimizeStreams(PDFLib, self.pako, PDFCore, doc, opts)`. Do NOT write
-  the bare `pako` at any call site in the UI script.
+- **Build injection must preserve `$` literally.** Use replacement callbacks in
+  `build.mjs` (`.replace(MARKER, () => code)`) when injecting vendor/app/ICC
+  blocks. Plain replacement strings corrupt minified libraries because
+  `String.replace` treats `$&`, `$1`, etc. specially; this previously broke
+  bundled `pako`.
+- **`pako` is not a reliable bare global in Figma's sandbox.** Resolve it through
+  `getPako()` in `src/ui.html` and `resolvePako()` in `pdf-core.js`, checking
+  `globalThis`, `self`, and `window`, and handling `pako.default`. Do not call
+  `PDFMerge.optimizeStreams` with a bare `pako` or `self.pako` directly.
 - **FOGRA39 profile licensing.** ECI profiles are free to use and redistribute
   unmodified (see `NOTICE.md`). The file currently came from a local Adobe/ECI
   install; if provenance matters, replace with the pristine ECI download. Print
@@ -228,14 +239,10 @@ Done (committed): P0 build/bundling/async API · P1 print-correct CMYK core +
 tests · P2 bundled FOGRA39 / PDF/X-1a · P3 thumbnails, persisted settings,
 filename templates, release prep · CMYK JPEG · DPI readout · font/image dedup ·
 **Aurora UI redesign** (two-column 900 px layout, animated conic-gradient borders,
-Google/Gemini palette, SVG icons, accessible collapsible cards).
+Google/Gemini palette, SVG icons, accessible collapsible cards) · RGB precision
+optimization · page ordering for merged PDFs · shared quality presets.
 
 Possible next steps (not started):
-- **RGB size optimization (precision reduction)** — *implemented.* Rounds Figma's
-  6-digit coordinates (2 dp standard, 1 dp maximum opt-in) via an operator-aware
-  tokenizer and re-deflates at zlib level 9. −55% on a real CV, beats Ghostscript,
-  text stays selectable. UI control: "Rozmiar pliku PDF" pill row in sRGB section.
-  See `docs/size-optimization.md` for design rationale.
 - **Image downscale/JPEG in the RGB path** — complementary lever for a CV with a
   photo (precision reduction only shrinks geometry, not raster images).
 - **True font re-subsetting** of Figma-embedded fonts (needs fontkit; larger,

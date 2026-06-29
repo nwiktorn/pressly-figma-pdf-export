@@ -46,8 +46,13 @@ async function buildIccBlock() {
   return `<!-- bundled ICC: ${ICC_PROFILE.name} -->\n<script>(function(){` +
     `var b="${b64}",s=atob(b),a=new Uint8Array(s.length);` +
     `for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i);` +
-    `window.__ICC_CMYK__=pako.inflate(a);` +
-    `window.__ICC_CMYK_NAME__=${JSON.stringify(ICC_PROFILE.name)};` +
+    `var r=typeof globalThis!="undefined"?globalThis:(typeof self!="undefined"?self:window);` +
+    `var z=(r&&r.pako)||(typeof self!="undefined"&&self.pako)||(typeof window!="undefined"&&window.pako);` +
+    `if(!z&&typeof pako!="undefined")z=pako;` +
+    `if(z&&z.default&&typeof z.default.inflate=="function")z=z.default;` +
+    `if(!z||typeof z.inflate!="function")throw new Error("pako inflate unavailable while loading ICC profile");` +
+    `r.__ICC_CMYK__=z.inflate(a);` +
+    `r.__ICC_CMYK_NAME__=${JSON.stringify(ICC_PROFILE.name)};` +
     `})();</script>`;
 }
 
@@ -72,9 +77,14 @@ async function build() {
   const icc = await buildIccBlock();
   const banner = '<!-- GENERATED FILE — do not edit. Source: src/ui.html. Build: npm run build -->';
   const out = `${banner}\n${src
-    .replace(VENDOR_MARKER, vendor)
-    .replace(MODULES_MARKER, modules)
-    .replace(ICC_MARKER, icc)}`;
+    .replace(VENDOR_MARKER, () => vendor)
+    .replace(MODULES_MARKER, () => modules)
+    .replace(ICC_MARKER, () => icc)}`;
+  for (const marker of [VENDOR_MARKER, MODULES_MARKER, ICC_MARKER]) {
+    if (out.includes(marker)) {
+      throw new Error(`Injection marker "${marker}" leaked into generated ui.html`);
+    }
+  }
   await writeFile(join(root, 'ui.html'), out, 'utf8');
   const kb = (Buffer.byteLength(out) / 1024).toFixed(0);
   console.log(`✓ built ui.html (${kb} KB, inlined ${VENDOR.length} libs + ${APP_MODULES.length} modules + ICC)`);

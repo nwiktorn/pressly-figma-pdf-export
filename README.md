@@ -4,17 +4,18 @@ Print-ready PDF export plugin for Figma.
 
 - **RGB** — vector PDF (text/shapes stay crisp), multi-page merge or per-frame ZIP.
   Merged PDFs deduplicate identical fonts/images across pages to keep files small.
-- **Size optimization** *(planned)* — Figma writes coordinates with 6 redundant
-  decimals; rounding them (2 dp default, 1 dp opt-in) and re-deflating shrinks a
-  typical CV by ≈55% — smaller than Ghostscript — with selectable text intact.
+- **Size optimization** — Figma writes coordinates with 6 redundant decimals;
+  the RGB path can round them (2 dp standard, 1 dp low-quality preset) and
+  re-deflate streams, shrinking a typical CV by ≈55% while keeping text selectable.
   See [`docs/size-optimization.md`](docs/size-optimization.md).
 - **CMYK** — raster PDF with `DeviceCMYK` images, ink-limit/GCR control, and
-  optional JPEG (`DCTDecode`) compression for much smaller files.
+  quality presets that choose DPI + JPEG/Flate compression.
 - **PDF/X-1a** — embeds a Coated FOGRA39 OutputIntent for print shops.
 - **Bleed** (spad), **crop marks** in registration color, correct `TrimBox`/`BleedBox`,
   white background, PDF metadata (title/author/dates/ID).
 - **Quality of life** — frame thumbnails, settings remembered via `clientStorage`,
-  filename templates (`{name}` `{index}` `{date}` `{time}` `{w}` `{h}`).
+  drag-and-drop page ordering for merged PDFs, filename templates (`{name}`
+  `{index}` `{date}` `{time}` `{w}` `{h}`).
 
 Runs fully locally — no network access (see `manifest.json`).
 
@@ -45,6 +46,9 @@ prototype's tokens and component patterns.
 
 The libraries are inlined at build time so the plugin works offline and needs no
 network access, which keeps it compatible with Figma's `networkAccess` policy.
+`build.mjs` injects large vendor strings with replacement callbacks rather than
+plain replacement strings, so `$` sequences inside minified libraries cannot be
+misinterpreted by JavaScript's `String.replace`.
 
 ## Development
 
