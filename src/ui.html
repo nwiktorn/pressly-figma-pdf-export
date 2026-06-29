@@ -906,7 +906,13 @@ function renderFrames() {
   }
   list.innerHTML = '';
   pageOrder = frames.map(f => f.id);
-  frames.forEach(f => {
+  const displayFrames = [...frames].sort((a, b) => {
+    const aSelected = initialSelectedIds.has(a.id);
+    const bSelected = initialSelectedIds.has(b.id);
+    if (aSelected === bSelected) return 0;
+    return aSelected ? -1 : 1;
+  });
+  displayFrames.forEach(f => {
     const el = document.createElement('label');
     const selected = initialSelectedIds.has(f.id);
     el.className = 'frow' + (selected ? ' checked' : '');
@@ -939,7 +945,8 @@ function syncPageOrder() {
   const checked = getCheckedIdsFromFrameList();
   const checkedSet = new Set(checked);
   const existing = pageOrder.filter(id => checkedSet.has(id));
-  const additions = checked.filter(id => !existing.includes(id));
+  const existingSet = new Set(existing);
+  const additions = frames.map(f => f.id).filter(id => checkedSet.has(id) && !existingSet.has(id));
   pageOrder = [...existing, ...additions];
 }
 

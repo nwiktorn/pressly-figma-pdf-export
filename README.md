@@ -14,9 +14,9 @@ Print-ready PDF export plugin for Figma.
 - **Bleed** (spad), **crop marks** in registration color, correct `TrimBox`/`BleedBox`,
   white background, PDF metadata (title/author/dates/ID).
 - **Quality of life** — recursive frame discovery inside Figma sections, frame
-  thumbnails, initial selection mirrored from Figma, English UI by default with
-  Polish switcher, light/dark theme switcher, settings remembered via
-  `clientStorage`, drag-and-drop page ordering for merged PDFs, filename
+  thumbnails, initial selection mirrored from Figma and shown first in the picker,
+  English UI by default with Polish switcher, light/dark theme switcher, settings
+  remembered via `clientStorage`, drag-and-drop page ordering for merged PDFs, filename
   templates (`{name}`
   `{index}` `{date}` `{time}` `{w}` `{h}`).
 

@@ -149,6 +149,9 @@ All UI state is the `S` object in `src/ui.html`.
   frames selected on the current Figma page start checked. If a section was
   selected, nested exportable frames/components start checked. If nothing
   exportable was selected in Figma, the plugin starts with all frames unchecked.
+  Initially checked frames are displayed at the top of the picker for large files;
+  this is a visual convenience only, while `pageOrder` still starts in document
+  order.
 - **Page ordering panel** for merged PDFs: when more than one frame is selected in
   `Jeden PDF` mode, a left-column `Kolejność stron` panel appears under the
   frame list. It mirrors selected frames, uses drag-and-drop insertion indicators
