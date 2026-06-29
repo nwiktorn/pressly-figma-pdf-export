@@ -487,6 +487,7 @@ const I18N = {
     deselectAll: 'Deselect all',
     loadingFrames: 'Loading frames...',
     noFrames: 'No frames on this page',
+    scanError: 'Could not scan frames:',
     pageOrder: 'Page order',
     orderHint: 'Drag pages to set the order in the merged PDF.',
     exportSettings: 'Export settings',
@@ -569,6 +570,7 @@ const I18N = {
     deselectAll: 'Odznacz wszystkie',
     loadingFrames: 'Ładowanie framów...',
     noFrames: 'Brak framów na tej stronie',
+    scanError: 'Nie udało się przeskanować framów:',
     pageOrder: 'Kolejność stron',
     orderHint: 'Przeciągnij stronę, aby ustawić kolejność w scalonym PDF-ie.',
     exportSettings: 'Ustawienia eksportu',
@@ -1162,6 +1164,14 @@ window.onmessage = async evt => {
     initialSelectedIds = new Set(msg.selectedFrameIds || []);
     renderFrames();
     if (msg.settings) applySettings(msg.settings);
+  }
+  if (msg.type === 'scanError') {
+    hasInit = true;
+    frames = [];
+    pageOrder = [];
+    $('frameList').innerHTML = `<div class="empty-state">${t('scanError')} ${esc(msg.message || '')}</div>`;
+    $('frameCount').textContent = '';
+    updateBtn();
   }
   if (msg.type === 'thumb') {
     const url = URL.createObjectURL(new Blob([new Uint8Array(msg.bytes)], { type: 'image/png' }));

@@ -140,9 +140,11 @@ All UI state is the `S` object in `src/ui.html`.
 ### Quality of life
 - **Frame thumbnails** in the list.
 - **Recursive frame discovery inside sections**: `code.js` walks the current page
-  tree and exports `FRAME`/`COMPONENT` nodes as individual pages. `SECTION` is an
-  organizational container only; selecting a section selects all exportable
-  frames/components inside it for the initial plugin state.
+  tree through organizational `SECTION`/`GROUP` nodes and exports
+  `FRAME`/`COMPONENT` nodes as individual pages. Do not recurse into the contents
+  of an exportable frame/component; those children are artwork, not PDF pages.
+  Selecting a section selects all exportable frames/components inside it for the
+  initial plugin state.
 - **Initial selection mirrors Figma**: all exportable frames are shown, but only
   frames selected on the current Figma page start checked. If a section was
   selected, nested exportable frames/components start checked. If nothing

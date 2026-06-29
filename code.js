@@ -1,5 +1,5 @@
 const EXPORTABLE = ['FRAME', 'COMPONENT'];
-const WALKABLE = ['FRAME', 'COMPONENT', 'SECTION', 'GROUP', 'INSTANCE'];
+const WALKABLE = ['SECTION', 'GROUP'];
 const SETTINGS_KEY = 'pressly-pdf-export-settings';
 const THUMB_WIDTH = 64; // px wide preview per frame
 
@@ -22,6 +22,7 @@ function collectExportableFrames(nodes, out = [], sectionName = '') {
     const nextSectionName = node.type === 'SECTION' ? node.name : sectionName;
     if (EXPORTABLE.includes(node.type)) {
       out.push(frameInfo(node, sectionName));
+      continue;
     }
     if (WALKABLE.includes(node.type) && node.children && node.children.length) {
       collectExportableFrames(node.children, out, nextSectionName);
@@ -53,8 +54,17 @@ async function sendThumbnails(frames) {
 }
 
 async function pushInit() {
-  const frames = getFrames();
-  const selectedFrameIds = getSelectedFrameIds();
+  let frames = [];
+  let selectedFrameIds = [];
+  try {
+    frames = getFrames();
+    selectedFrameIds = getSelectedFrameIds();
+  } catch (err) {
+    figma.ui.postMessage({
+      type: 'scanError',
+      message: String(err && err.message ? err.message : err),
+    });
+  }
   if (!cachedSettings) {
     try { cachedSettings = await figma.clientStorage.getAsync(SETTINGS_KEY); } catch (e) {}
   }
