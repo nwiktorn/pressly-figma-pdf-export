@@ -7,6 +7,8 @@ const MAX_UI_SIZE = { width: 1200, height: 860 };
 
 let cachedSettings = null;
 
+figma.showUI(__html__, { ...DEFAULT_UI_SIZE, title: 'Pressly - PDF Export' });
+
 function clampUiSize(size) {
   const width = Math.round(Number(size && size.width) || DEFAULT_UI_SIZE.width);
   const height = Math.round(Number(size && size.height) || DEFAULT_UI_SIZE.height);
@@ -60,7 +62,9 @@ async function pushInit() {
 async function start() {
   try { cachedSettings = await figma.clientStorage.getAsync(SETTINGS_KEY); } catch (e) {}
   const uiSize = clampUiSize(cachedSettings && cachedSettings.uiSize);
-  figma.showUI(__html__, { ...uiSize, title: 'Pressly - PDF Export' });
+  if (uiSize.width !== DEFAULT_UI_SIZE.width || uiSize.height !== DEFAULT_UI_SIZE.height) {
+    figma.ui.resize(uiSize.width, uiSize.height);
+  }
   pushInit();
 }
 
