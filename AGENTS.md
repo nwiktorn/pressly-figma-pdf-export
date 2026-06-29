@@ -126,31 +126,44 @@ All UI state is the `S` object in `src/ui.html`.
   embedded. ICC is embedded **only** when PDF/X is on (keeps plain CMYK small).
 - **Compression**: `flate` (lossless) or `jpeg` (`DCTDecode`) + quality slider.
 
-### Quality presets and resolution clarity
-- **Jakość PDF** is a single three-option preset panel shared by RGB and CMYK:
-  low / medium / highest.
-- RGB presets map to stream precision: low = `optimize: "max"` (1 dp), medium =
-  `optimize: "standard"` (2 dp), highest = `optimize: "off"`.
-- CMYK presets map to raster output: low = 192 DPI JPEG 70, medium = 288 DPI JPEG
-  85, highest = 384 DPI Flate. The plugin treats 96 px = 1 inch, so
-  `DPI = 96 × scale`; Figma caps export at 4×.
-- The CMYK details area still shows the DPI readout and physical size for the
-  selected frame, plus ink limit and PDF/X toggles.
+### RGB size optimization and CMYK resolution clarity
+- **Rozmiar pliku PDF** is visible in the sRGB/vector section. It maps to
+  `optimize: "off"`, `"standard"` (2 dp), or `"max"` (1 dp), using
+  `PDFMerge.optimizeStreams` to reduce Figma's over-precise vector streams while
+  keeping text selectable.
+- **Jakość rastra CMYK** is visible only for CMYK. It exposes DPI scale pills
+  (192/288/384 DPI), JPEG/Flate compression, JPEG quality, ink limit and PDF/X.
+- The plugin treats 96 px = 1 inch, so `DPI = 96 × scale`; Figma caps export at
+  4×. The CMYK readout shows source px → output px and physical size in mm for
+  the selected frame.
 
 ### Quality of life
 - **Frame thumbnails** in the list.
+- **Initial selection mirrors Figma**: all exportable frames are shown, but only
+  frames selected on the current Figma page start checked. If nothing exportable
+  was selected in Figma, the plugin starts with all frames unchecked.
 - **Page ordering panel** for merged PDFs: when more than one frame is selected in
   `Jeden PDF` mode, a left-column `Kolejność stron` panel appears under the
-  frame list. It mirrors selected frames, uses drag-and-drop to mutate `pageOrder`,
-  and `getSelectedIds()` exports using that order.
+  frame list. It mirrors selected frames, uses drag-and-drop insertion indicators
+  and mutates `pageOrder` on drop; `getSelectedIds()` exports using that order.
 - **Settings persistence** via `clientStorage` (`collectSettings`/`applySettings`;
-  applySettings drives the real controls so dependent UI updates).
+  applySettings drives the real controls so dependent UI updates). The same
+  settings object stores `uiSize`, `lang`, and `theme`.
+- **Language/theme preferences**: English is the default UI language, Polish is
+  available from the topbar, and light/dark theme is also controlled from the
+  topbar. User-facing strings live in the `I18N` dictionary in `src/ui.html`;
+  keep both `en` and `pl` entries in sync.
+- **Resizable window**: `src/ui.html` renders a bottom-right resize handle, sends
+  `resizeUi` while dragging, then `saveUiSize` on release. `code.js` clamps to
+  760×520–1200×860 and calls `figma.ui.resize`; startup reads `uiSize` before
+  `showUI` so the window opens at the remembered size.
 - **Filename templates**: `{name} {index} {date} {time} {w} {h}`; auto per-file
   index in ZIP mode (`applyTemplate`).
 
 ### Aurora UI (src/ui.html)
 - **Two-column layout** (900 px): left column sticky frame list, right column settings stack.
-- **Topbar**: animated conic-gradient logo, plugin name, current Figma page dot.
+- **Topbar**: animated conic-gradient logo, plugin name, current Figma page dot,
+  compact light/dark theme switcher, and EN/PL language switcher.
 - **Toggle cards** (`.opt`): selected state uses `::before` masked conic-gradient ring
   (`@property --angle` + `animation: spin`). Same technique on the export CTA button.
 - **Collapsible cards**: `<button class="card-h click" aria-expanded>` + chevron SVG;
@@ -240,7 +253,8 @@ tests · P2 bundled FOGRA39 / PDF/X-1a · P3 thumbnails, persisted settings,
 filename templates, release prep · CMYK JPEG · DPI readout · font/image dedup ·
 **Aurora UI redesign** (two-column 900 px layout, animated conic-gradient borders,
 Google/Gemini palette, SVG icons, accessible collapsible cards) · RGB precision
-optimization · page ordering for merged PDFs · shared quality presets.
+optimization · page ordering for merged PDFs · explicit CMYK raster quality
+controls · resizable plugin window · light/dark and EN/PL preferences.
 
 Possible next steps (not started):
 - **Image downscale/JPEG in the RGB path** — complementary lever for a CV with a
@@ -257,5 +271,6 @@ Possible next steps (not started):
 
 ## 9. Language note
 
-The plugin UI is **Polish**. Keep user-facing strings in Polish; code, comments
-and docs are in English.
+The plugin UI is **English by default** with a **Polish** switcher. Keep every
+user-facing string in both `I18N.en` and `I18N.pl`; code, comments and docs are
+in English.

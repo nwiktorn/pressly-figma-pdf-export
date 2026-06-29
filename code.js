@@ -1,8 +1,20 @@
-figma.showUI(__html__, { width: 900, height: 660, title: 'Pressly - PDF Export' });
-
 const EXPORTABLE = ['FRAME', 'COMPONENT', 'SECTION'];
 const SETTINGS_KEY = 'pressly-pdf-export-settings';
 const THUMB_WIDTH = 64; // px wide preview per frame
+const DEFAULT_UI_SIZE = { width: 900, height: 660 };
+const MIN_UI_SIZE = { width: 760, height: 520 };
+const MAX_UI_SIZE = { width: 1200, height: 860 };
+
+let cachedSettings = null;
+
+function clampUiSize(size) {
+  const width = Math.round(Number(size && size.width) || DEFAULT_UI_SIZE.width);
+  const height = Math.round(Number(size && size.height) || DEFAULT_UI_SIZE.height);
+  return {
+    width: Math.min(MAX_UI_SIZE.width, Math.max(MIN_UI_SIZE.width, width)),
+    height: Math.min(MAX_UI_SIZE.height, Math.max(MIN_UI_SIZE.height, height)),
+  };
+}
 
 function getFrames() {
   return figma.currentPage.children
@@ -13,6 +25,12 @@ function getFrames() {
       width: Math.round(n.width),
       height: Math.round(n.height),
     }));
+}
+
+function getSelectedFrameIds() {
+  return figma.currentPage.selection
+    .filter(n => EXPORTABLE.includes(n.type))
+    .map(n => n.id);
 }
 
 // Send small PNG previews lazily so the list renders instantly, then fills in.
@@ -31,13 +49,22 @@ async function sendThumbnails(frames) {
 
 async function pushInit() {
   const frames = getFrames();
-  let settings = null;
-  try { settings = await figma.clientStorage.getAsync(SETTINGS_KEY); } catch (e) {}
-  figma.ui.postMessage({ type: 'init', frames, settings: settings || null });
+  const selectedFrameIds = getSelectedFrameIds();
+  if (!cachedSettings) {
+    try { cachedSettings = await figma.clientStorage.getAsync(SETTINGS_KEY); } catch (e) {}
+  }
+  figma.ui.postMessage({ type: 'init', frames, selectedFrameIds, settings: cachedSettings || null });
   sendThumbnails(frames);
 }
 
-pushInit();
+async function start() {
+  try { cachedSettings = await figma.clientStorage.getAsync(SETTINGS_KEY); } catch (e) {}
+  const uiSize = clampUiSize(cachedSettings && cachedSettings.uiSize);
+  figma.showUI(__html__, { ...uiSize, title: 'Pressly - PDF Export' });
+  pushInit();
+}
+
+start();
 
 // Re-scan when the user switches/edits the page so the frame list stays fresh.
 figma.on('currentpagechange', () => { pushInit(); });
@@ -49,7 +76,21 @@ figma.ui.onmessage = async (msg) => {
   }
 
   if (msg.type === 'saveSettings') {
-    try { await figma.clientStorage.setAsync(SETTINGS_KEY, msg.settings); } catch (e) {}
+    cachedSettings = msg.settings;
+    try { await figma.clientStorage.setAsync(SETTINGS_KEY, cachedSettings); } catch (e) {}
+    return;
+  }
+
+  if (msg.type === 'resizeUi') {
+    const size = clampUiSize(msg);
+    figma.ui.resize(size.width, size.height);
+    return;
+  }
+
+  if (msg.type === 'saveUiSize') {
+    const size = clampUiSize(msg);
+    cachedSettings = { ...(cachedSettings || {}), uiSize: size };
+    try { await figma.clientStorage.setAsync(SETTINGS_KEY, cachedSettings); } catch (e) {}
     return;
   }
 

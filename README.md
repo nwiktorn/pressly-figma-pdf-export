@@ -5,16 +5,18 @@ Print-ready PDF export plugin for Figma.
 - **RGB** — vector PDF (text/shapes stay crisp), multi-page merge or per-frame ZIP.
   Merged PDFs deduplicate identical fonts/images across pages to keep files small.
 - **Size optimization** — Figma writes coordinates with 6 redundant decimals;
-  the RGB path can round them (2 dp standard, 1 dp low-quality preset) and
+  the RGB path can round them (2 dp standard, 1 dp maximum option) and
   re-deflate streams, shrinking a typical CV by ≈55% while keeping text selectable.
   See [`docs/size-optimization.md`](docs/size-optimization.md).
 - **CMYK** — raster PDF with `DeviceCMYK` images, ink-limit/GCR control, and
-  quality presets that choose DPI + JPEG/Flate compression.
+  explicit DPI plus JPEG/Flate compression controls.
 - **PDF/X-1a** — embeds a Coated FOGRA39 OutputIntent for print shops.
 - **Bleed** (spad), **crop marks** in registration color, correct `TrimBox`/`BleedBox`,
   white background, PDF metadata (title/author/dates/ID).
-- **Quality of life** — frame thumbnails, settings remembered via `clientStorage`,
-  drag-and-drop page ordering for merged PDFs, filename templates (`{name}`
+- **Quality of life** — frame thumbnails, initial selection mirrored from Figma,
+  English UI by default with Polish switcher, light/dark theme switcher, settings
+  remembered via `clientStorage`, resizable plugin window, drag-and-drop page
+  ordering for merged PDFs, filename templates (`{name}`
   `{index}` `{date}` `{time}` `{w}` `{h}`).
 
 Runs fully locally — no network access (see `manifest.json`).

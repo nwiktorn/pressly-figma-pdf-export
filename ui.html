@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — do not edit. Source: src/ui.html. Build: npm run build -->
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Pressly - PDF Export</title>
@@ -1056,6 +1056,20 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   --mono: 'SF Mono', ui-monospace, 'JetBrains Mono', Menlo, monospace;
 }
 
+body[data-theme="dark"] {
+  --bg: #111218;
+  --surface: #181a22;
+  --surface-2: #222531;
+  --fg: #f2f3f7;
+  --muted: #c1c5d2;
+  --faint: #8f95a8;
+  --border: #2b2f3c;
+  --border-2: #3a4050;
+  --accent-soft: #25264a;
+  --success-bg: #10291f;
+  --warn-bg: #322712;
+}
+
 html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var(--fg); background: var(--bg); -webkit-font-smoothing: antialiased; }
 
 @keyframes spin { to { --angle: 360deg; } }
@@ -1080,6 +1094,12 @@ html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var
 .brand span { font-size: 11px; color: var(--faint); }
 .topbar-page { margin-left: auto; font-size: 11px; color: var(--faint); font-family: var(--mono); display: flex; align-items: center; gap: 6px; }
 .pgdot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex: none; }
+.topbar-controls { display: flex; align-items: center; gap: 8px; flex: none; }
+.mini-seg { display: flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); }
+.mini-seg button { min-width: 30px; height: 24px; border: 0; border-radius: 7px; background: transparent; color: var(--faint); font: inherit; font-size: 10.5px; font-weight: 700; cursor: pointer; }
+.mini-seg button:hover { color: var(--fg); }
+.mini-seg button.on { color: var(--accent); background: var(--surface); box-shadow: 0 1px 3px rgba(20, 22, 30, .08); }
+.mini-seg button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
 
 /* ── scroll + two-column layout ── */
 .scroll { flex: 1; overflow-y: auto; padding: 18px 20px 16px; }
@@ -1123,10 +1143,16 @@ html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var
 
 /* ─── page order ─── */
 .order-card { margin-top: 14px; }
-.order-list { display: flex; flex-direction: column; gap: 5px; max-height: 250px; overflow-y: auto; padding-right: 2px; }
-.page-row { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: grab; user-select: none; transition: .14s; }
+.order-list { display: flex; flex-direction: column; gap: 5px; max-height: 250px; overflow-y: auto; padding: 3px 2px 3px 0; }
+.page-row { position: relative; display: flex; align-items: center; gap: 9px; padding: 8px 9px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: grab; user-select: none; transition: background .14s, border-color .14s, box-shadow .14s, opacity .14s, transform .14s; }
 .page-row:hover { border-color: var(--border-2); background: var(--surface-2); }
-.page-row.dragging { opacity: .45; }
+.page-row:active { cursor: grabbing; }
+.page-row.dragging { opacity: .58; transform: scale(.985); box-shadow: 0 8px 22px rgba(37, 43, 74, .12); border-color: #d2d5e4; }
+.page-row.drop-before::before,
+.page-row.drop-after::after { content: ""; position: absolute; left: 10px; right: 10px; height: 3px; border-radius: 99px; background: linear-gradient(90deg,var(--g1),var(--g2),var(--g3)); box-shadow: 0 0 0 3px rgba(91,91,240,.12); pointer-events: none; }
+.page-row.drop-before::before { top: -5px; }
+.page-row.drop-after::after { bottom: -5px; }
+body.reordering, body.reordering * { cursor: grabbing !important; }
 .page-grip { width: 14px; height: 18px; flex: none; color: var(--faint); display: grid; place-items: center; }
 .page-num { width: 23px; height: 23px; flex: none; display: grid; place-items: center; border-radius: 7px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; font-family: var(--mono); }
 .page-thumb { width: 28px; height: 28px; border-radius: 6px; flex: none; border: 1px solid var(--border-2); background: repeating-conic-gradient(#eef0f7 0% 25%, #f7f8fc 0% 50%) 0/12px 12px center/contain no-repeat; }
@@ -1173,15 +1199,6 @@ html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var
 .pill:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
 .dpi-readout { font-size: 11px; color: var(--muted); font-family: var(--mono); background: var(--surface-2); border-radius: 8px; padding: 7px 10px; margin-top: 9px; }
 .dpi-readout b { color: var(--fg); }
-.quality-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.qbtn { font: inherit; min-height: 82px; text-align: left; border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; background: var(--surface); transition: .14s; }
-.qbtn:hover { border-color: var(--border-2); background: #fbfbff; }
-.qbtn b { display: block; font-size: 12.5px; font-weight: 650; color: var(--fg); margin-bottom: 5px; }
-.qbtn span { display: block; font-size: 10.6px; line-height: 1.35; color: var(--faint); }
-.qbtn.on { border-color: var(--accent); background: var(--accent-soft); }
-.qbtn.on b, .qbtn.on span { color: var(--accent); }
-.qbtn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
-.quality-note { font-size: 11px; line-height: 1.4; color: var(--muted); background: var(--surface-2); border-radius: 8px; padding: 8px 10px; margin-top: 9px; }
 
 /* ── form rows ── */
 .row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
@@ -1208,7 +1225,7 @@ input[type=range] { accent-color: var(--accent); }
 .tokens code { font-family: var(--mono); font-size: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 5px; color: var(--muted); }
 
 /* ── footer ── */
-.footer { display: flex; gap: 10px; padding: 13px 20px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.footer { display: flex; gap: 10px; padding: 13px 34px 13px 20px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
 .footer .spacer { flex: 1; }
 .btn { font: inherit; font-size: 13px; font-weight: 600; border-radius: 11px; padding: 11px 16px; cursor: pointer; border: 1px solid transparent; transition: .15s; }
 .btn-ghost { background: var(--surface); border-color: var(--border-2); color: var(--muted); }
@@ -1241,6 +1258,15 @@ input[type=range] { accent-color: var(--accent); }
 .prog-bar-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg,var(--g1),var(--g2),var(--g3)); transition: width .3s ease; }
 .prog-sub { font-size: 11.5px; color: var(--faint); font-family: var(--mono); }
 
+/* resize handle */
+.resize-handle { position: fixed; right: 7px; bottom: 7px; width: 18px; height: 18px; border: 0; border-radius: 5px; background: transparent; cursor: nwse-resize; z-index: 30; opacity: .58; transition: opacity .14s, background .14s; }
+.resize-handle::before { content: ""; position: absolute; inset: 4px; background:
+  linear-gradient(135deg, transparent 0 48%, var(--faint) 49% 54%, transparent 55%),
+  linear-gradient(135deg, transparent 0 64%, var(--faint) 65% 70%, transparent 71%);
+}
+.resize-handle:hover, .resize-handle:focus-visible { opacity: 1; background: var(--surface-2); outline: none; }
+body.resizing, body.resizing * { cursor: nwse-resize !important; user-select: none !important; }
+
 /* ── results ── */
 .results-card { display: none; margin-top: 14px; border: 1px solid #b7ecd2; border-radius: var(--r); overflow: hidden; }
 .results-card.visible { display: block; animation: rise .3s ease; }
@@ -1257,7 +1283,7 @@ input[type=range] { accent-color: var(--accent); }
 ::-webkit-scrollbar-thumb { background: #dfe1ec; border-radius: 8px; border: 2px solid var(--surface); }
 </style>
 </head>
-<body>
+<body data-theme="light">
 <div class="app">
 
 <!-- TOPBAR -->
@@ -1265,8 +1291,18 @@ input[type=range] { accent-color: var(--accent); }
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#5b5bf0" stroke-width="1.6"/><path d="M13 3v5h5" stroke="#5b5bf0" stroke-width="1.6"/><text x="12" y="17.5" font-size="6.5" font-weight="700" fill="#5b5bf0" text-anchor="middle" font-family="sans-serif">PDF</text></svg>
   </div>
-  <div class="brand"><b>Pressly PDF Export</b><span>Eksport gotowy do druku</span></div>
+  <div class="brand"><b>Pressly PDF Export</b><span id="brandSub">Print-ready export</span></div>
   <div class="topbar-page"><span class="pgdot"></span><span id="pageLabel">Figma</span></div>
+  <div class="topbar-controls">
+    <div class="mini-seg" id="themeSeg" role="group" aria-label="Theme">
+      <button type="button" data-theme-option="light" class="on">Light</button>
+      <button type="button" data-theme-option="dark">Dark</button>
+    </div>
+    <div class="mini-seg" id="langSeg" role="group" aria-label="Language">
+      <button type="button" data-lang-option="en" class="on">EN</button>
+      <button type="button" data-lang-option="pl">PL</button>
+    </div>
+  </div>
 </div>
 
 <div class="scroll">
@@ -1276,27 +1312,27 @@ input[type=range] { accent-color: var(--accent); }
   <div class="col-l">
     <div class="card">
       <div class="card-h">
-        <span class="ttl">Framy</span>
+        <span class="ttl">Frames</span>
         <span class="meta" id="frameCount"></span>
       </div>
       <div class="card-b">
         <div class="frame-tools">
-          <button class="tiny" id="selectAll">Zaznacz wszystkie</button>
-          <button class="tiny" id="deselectAll">Odznacz wszystkie</button>
+          <button class="tiny" id="selectAll">Select all</button>
+          <button class="tiny" id="deselectAll">Deselect all</button>
         </div>
         <div class="frames" id="frameList">
-          <div class="empty-state">Ładowanie framów…</div>
+          <div class="empty-state">Loading frames...</div>
         </div>
       </div>
     </div>
     <div class="card order-card hidden" id="pageOrderCard">
       <div class="card-h">
-        <span class="ttl">Kolejność stron</span>
+        <span class="ttl">Page order</span>
         <span class="meta" id="pageOrderCount"></span>
       </div>
       <div class="card-b">
         <div class="order-list" id="pageOrderList"></div>
-        <div class="order-hint">Przeciągnij stronę, aby ustawić kolejność w scalonym PDF-ie.</div>
+        <div class="order-hint">Drag pages to set the order in the merged PDF.</div>
       </div>
     </div>
   </div>
@@ -1306,65 +1342,80 @@ input[type=range] { accent-color: var(--accent); }
 
   <!-- EXPORT SETTINGS -->
   <div class="card">
-    <div class="card-h"><span class="ttl">Ustawienia eksportu</span></div>
+    <div class="card-h"><span class="ttl">Export settings</span></div>
     <div class="card-b">
-      <div class="eyebrow" id="modeLbl">Tryb</div>
+      <div class="eyebrow" id="modeLbl">Mode</div>
       <div class="seg" id="modeSeg" role="radiogroup" aria-labelledby="modeLbl">
         <label class="opt on" id="modeMultiCard">
           <input type="radio" class="sr-radio" name="mode" value="multi" checked>
           <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>Jeden PDF</b></span>
-          <p>Wielostronicowy plik</p>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>One PDF</b></span>
+          <p>Multi-page file</p>
         </label>
         <label class="opt" id="modeSepCard">
           <input type="radio" class="sr-radio" name="mode" value="separate">
           <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="1.6"/></svg></span><b>Osobne pliki</b></span>
-          <p>Każdy frame → ZIP</p>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="1.6"/></svg></span><b>Separate files</b></span>
+          <p>Each frame -> ZIP</p>
         </label>
       </div>
 
       <div class="divider"></div>
-      <div class="eyebrow" id="profLbl">Profil koloru</div>
+      <div class="eyebrow" id="profLbl">Color profile</div>
       <div class="seg" id="profSeg" role="radiogroup" aria-labelledby="profLbl">
         <label class="opt on" id="profileRGBCard">
           <input type="radio" class="sr-radio" name="profile" value="rgb" checked>
           <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>sRGB — Wektor</b></span>
-          <p>Tekst zaznaczalny, fonty osadzone</p>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><b>sRGB - Vector</b></span>
+          <p>Selectable text, embedded fonts</p>
         </label>
         <label class="opt" id="profileCMYKCard">
           <input type="radio" class="sr-radio" name="profile" value="cmyk">
           <span class="tick"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9V5h12v4M6 18H4v-7h16v7h-2M8 14h8v6H8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span><b>CMYK — Druk</b></span>
-          <p>Raster RGB→CMYK, do offsetu</p>
+          <span class="oh"><span class="ic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9V5h12v4M6 18H4v-7h16v7h-2M8 14h8v6H8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span><b>CMYK - Print</b></span>
+          <p>RGB->CMYK raster, for offset</p>
         </label>
       </div>
 
       <div class="banner info" id="bannerRGB">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Wektor — tekst zaznaczalny, <b>niezależny od DPI</b>. Idealny do maila i ekranu.</span>
+        <span>Vector - selectable text, DPI-independent. Ideal for email and screen.</span>
       </div>
       <div class="banner warn hidden" id="bannerCMYK">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span><b>CMYK raster</b> — tekst nie będzie zaznaczalny. Przeznaczony do drukarni offsetowych.</span>
+        <span>CMYK raster - text will not be selectable. Intended for offset print shops.</span>
       </div>
-      <div id="qualityPresetCard" style="border-top:1px solid var(--border);padding:12px 0 0">
-        <div class="eyebrow" style="margin-bottom:8px">Jakość PDF</div>
-        <div class="quality-grid" id="qualityPresetGroup">
-          <button class="qbtn" data-quality="low"><b>Niska</b><span>Najmniejszy plik, szybki podgląd i wysyłka.</span></button>
-          <button class="qbtn on" data-quality="medium"><b>Średnia</b><span>Dobry balans jakości i rozmiaru.</span></button>
-          <button class="qbtn" data-quality="high"><b>Najwyższa</b><span>Największy plik, minimum strat.</span></button>
+      <div id="optimizeCard" style="border-top:1px solid var(--border);padding:12px 0 0">
+        <div class="eyebrow" style="margin-bottom:8px">PDF file size</div>
+        <div class="pills" id="optimizeGroup">
+          <button class="pill" data-opt="off"><b>Off</b><span>original</span></button>
+          <button class="pill on" data-opt="standard"><b>Standard</b><span>~55% smaller</span></button>
+          <button class="pill" data-opt="max"><b>Max</b><span>~67% smaller</span></button>
         </div>
-        <div class="quality-note" id="qualityPresetNote"></div>
+        <div class="banner info">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 14h7v6H4zM13 4h7v16h-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7.5 11V8.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Safe compression for Figma vector PDFs: reduces geometry streams while text stays selectable.</span>
+        </div>
+        <div class="banner warn hidden" id="bannerOptMax">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>Maximum compression rounds geometry more aggressively. Check the preview for very small text and hairlines.</span>
+        </div>
       </div>
       <!-- CMYK details (visible only for print raster exports) -->
       <div class="hidden" id="qualityCard" style="margin-top:0;border-top:1px solid var(--border);padding:12px 0 0">
-        <div class="eyebrow" style="margin-bottom:8px">Ustawienia CMYK</div>
+        <div class="eyebrow" style="margin-bottom:8px">CMYK raster quality</div>
+        <div class="pills" id="dpiGroup">
+          <button class="pill" data-scale="2"><b>192</b><span>DPI</span></button>
+          <button class="pill on" data-scale="3"><b>288</b><span>DPI</span></button>
+          <button class="pill" data-scale="4"><b>384</b><span>DPI</span></button>
+        </div>
         <div class="dpi-readout" id="dpiReadout"></div>
         <div class="divider"></div>
-        <div class="row"><span class="lbl">Limit farby</span><input type="number" class="form-input short" id="inkLimit" value="320" min="240" max="400" step="10" aria-label="Limit farby w procentach"><span class="form-unit">%</span></div>
-        <label class="check"><input type="checkbox" id="pdfxCheck"><span class="lbl">PDF/X-1a (OutputIntent FOGRA39)</span><span class="badge" id="pdfxBadge">wył.</span></label>
+        <div class="row"><span class="lbl" id="compressionLbl">Image compression</span><select class="form-input short" id="compression" aria-label="Image compression"><option value="flate">Flate</option><option value="jpeg">JPEG</option></select></div>
+        <div class="row hidden" id="jpegQualityRow"><span class="lbl" id="jpegQualityLbl">JPEG quality</span><input type="range" id="jpegQuality" min="50" max="98" value="85" aria-label="JPEG quality"><span class="form-unit" id="jpegQualityVal">85</span></div>
+        <div class="divider"></div>
+        <div class="row"><span class="lbl" id="inkLimitLbl">Ink limit</span><input type="number" class="form-input short" id="inkLimit" value="320" min="240" max="400" step="10" aria-label="Ink limit"><span class="form-unit">%</span></div>
+        <label class="check"><input type="checkbox" id="pdfxCheck"><span class="lbl">PDF/X-1a (OutputIntent FOGRA39)</span><span class="badge" id="pdfxBadge">off</span></label>
       </div>
     </div>
   </div>
@@ -1372,44 +1423,44 @@ input[type=range] { accent-color: var(--accent); }
   <!-- PRINT OPTIONS -->
   <div class="card" id="printCard">
     <button type="button" class="card-h click" id="printHeader" aria-expanded="true" aria-controls="printBody">
-      <span class="ttl">Opcje druku</span>
+      <span class="ttl">Print options</span>
       <span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </button>
     <div class="card-b" id="printBody">
-      <label class="check"><input type="checkbox" id="bleedCheck"><span class="lbl">Rozpad (bleed)</span><span class="badge" id="bleedBadge">wył.</span></label>
-      <div class="row hidden" id="bleedRow" style="padding-left:26px"><span class="lbl">Margines</span><input type="number" class="form-input short" id="bleedMm" value="3" min="0" max="25" step="0.5" aria-label="Margines spadu w milimetrach"><span class="form-unit">mm</span></div>
+      <label class="check"><input type="checkbox" id="bleedCheck"><span class="lbl">Bleed</span><span class="badge" id="bleedBadge">off</span></label>
+      <div class="row hidden" id="bleedRow" style="padding-left:26px"><span class="lbl">Margin</span><input type="number" class="form-input short" id="bleedMm" value="3" min="0" max="25" step="0.5" aria-label="Bleed margin"><span class="form-unit">mm</span></div>
       <div class="divider"></div>
-      <label class="check"><input type="checkbox" id="cropCheck"><span class="lbl">Znaczniki cięcia</span><span class="badge">crop marks</span></label>
+      <label class="check"><input type="checkbox" id="cropCheck"><span class="lbl">Crop marks</span><span class="badge">crop marks</span></label>
       <div class="divider"></div>
-      <label class="check"><input type="checkbox" id="whiteBgCheck" checked><span class="lbl">Białe tło pod treścią</span><span class="badge">CMYK</span></label>
+      <label class="check"><input type="checkbox" id="whiteBgCheck" checked><span class="lbl">White background under artwork</span><span class="badge">CMYK</span></label>
     </div>
   </div>
 
   <!-- METADATA -->
   <div class="card col">
     <button type="button" class="card-h click" id="metaHeader" aria-expanded="false" aria-controls="metaBody">
-      <span class="ttl">Metadane PDF</span>
+      <span class="ttl">PDF metadata</span>
       <span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </button>
     <div class="card-b" id="metaBody">
-      <div class="row"><span class="lbl" style="flex:none;width:54px">Tytuł</span><input class="form-input" id="metaTitle" placeholder="np. CV Łucja Nowak" aria-label="Tytuł dokumentu PDF"></div>
-      <div class="row"><span class="lbl" style="flex:none;width:54px">Autor</span><input class="form-input" id="metaAuthor" placeholder="np. Łucja Nowak" aria-label="Autor dokumentu PDF"></div>
-      <div class="row"><span class="lbl" style="flex:none;width:54px">Temat</span><input class="form-input" id="metaSubject" placeholder="np. Curriculum Vitae" aria-label="Temat dokumentu PDF"></div>
+      <div class="row"><span class="lbl" style="flex:none;width:54px">Title</span><input class="form-input" id="metaTitle" placeholder="e.g. Lucja Nowak CV" aria-label="PDF title"></div>
+      <div class="row"><span class="lbl" style="flex:none;width:54px">Author</span><input class="form-input" id="metaAuthor" placeholder="e.g. Lucja Nowak" aria-label="PDF author"></div>
+      <div class="row"><span class="lbl" style="flex:none;width:54px">Subject</span><input class="form-input" id="metaSubject" placeholder="e.g. Curriculum Vitae" aria-label="PDF subject"></div>
     </div>
   </div>
 
   <!-- FILENAME -->
   <div class="card">
-    <div class="card-h"><span class="ttl">Nazwa pliku</span></div>
+    <div class="card-h"><span class="ttl">Filename</span></div>
     <div class="card-b">
-      <div class="file-wrap"><input class="form-input" id="filename" value="export" placeholder="nazwa bez rozszerzenia" aria-label="Nazwa pliku"><span class="ext" id="fileExt">.pdf</span></div>
-      <div class="tokens">Tokeny: <code>{name}</code><code>{index}</code><code>{date}</code><code>{time}</code><code>{w}</code><code>{h}</code></div>
+      <div class="file-wrap"><input class="form-input" id="filename" value="export" placeholder="name without extension" aria-label="Filename"><span class="ext" id="fileExt">.pdf</span></div>
+      <div class="tokens">Tokens: <code>{name}</code><code>{index}</code><code>{date}</code><code>{time}</code><code>{w}</code><code>{h}</code></div>
     </div>
   </div>
 
   <!-- RESULTS -->
   <div class="results-card" id="resultsCard">
-    <div class="rh"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Gotowe — pobierz plik</div>
+    <div class="rh"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="resultsTitle">Done - download file</span></div>
     <div class="rb" id="resultsList"></div>
   </div>
 
@@ -1418,19 +1469,20 @@ input[type=range] { accent-color: var(--accent); }
 </div><!-- /scroll -->
 
 <div class="footer">
-  <button class="btn btn-ghost" id="btnCancel">Anuluj</button>
+  <button class="btn btn-ghost" id="btnCancel">Cancel</button>
   <span class="spacer"></span>
   <div class="cta dis" id="ctaWrap">
-    <button id="btnExport"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="btnExportLbl">Eksportuj PDF</span></button>
+    <button id="btnExport"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="btnExportLbl">Export PDF</span></button>
   </div>
 </div>
+<button class="resize-handle" id="resizeHandle" type="button" title="Resize window" aria-label="Resize window"></button>
 
 </div><!-- /app -->
 
 <!-- PROGRESS OVERLAY -->
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
-  <div class="prog-title" id="progTitle">Eksportuję…</div>
+  <div class="prog-title" id="progTitle">Exporting...</div>
   <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
   <div class="prog-sub" id="progSub"></div>
 </div>
@@ -1440,37 +1492,202 @@ input[type=range] { accent-color: var(--accent); }
 let frames = [];
 let pageOrder = [];
 let draggingPageId = null;
+let hasInit = false;
+let initialSelectedIds = new Set();
 const thumbUrls = new Map();
-const S = { mode: 'multi', profile: 'rgb', qualityPreset: 'medium', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false, compression: 'jpeg', jpegQuality: 85, optimize: 'standard' };
-const QUALITY_PRESETS = {
-  low: {
-    rgb: { optimize: 'max' },
-    cmyk: { scale: 2, compression: 'jpeg', jpegQuality: 70 },
-    note: {
-      rgb: 'RGB: najmniejszy plik, tekst zostaje zaznaczalny; geometria jest mocniej zaokrąglana.',
-      cmyk: 'CMYK: 192 DPI i JPEG 70. Dobre do akceptacji i szybkiego wysłania.'
-    }
-  },
-  medium: {
-    rgb: { optimize: 'standard' },
-    cmyk: { scale: 3, compression: 'jpeg', jpegQuality: 85 },
-    note: {
-      rgb: 'RGB: domyślna optymalizacja rozmiaru, zwykle bez widocznych zmian.',
-      cmyk: 'CMYK: 288 DPI i JPEG 85. Dobry balans dla większości wydruków.'
-    }
-  },
-  high: {
-    rgb: { optimize: 'off' },
-    cmyk: { scale: 4, compression: 'flate', jpegQuality: 98 },
-    note: {
-      rgb: 'RGB: bez redukcji precyzji strumieni. Największy plik, pełna geometria z Figmy.',
-      cmyk: 'CMYK: 384 DPI i bezstratna kompresja. Największy plik, najlepsza jakość rastra.'
-    }
-  }
-};
+const S = { mode: 'multi', profile: 'rgb', lang: 'en', theme: 'light', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false, compression: 'flate', jpegQuality: 85, optimize: 'standard' };
+const UI_MIN = { width: 760, height: 520 };
+const UI_MAX = { width: 1200, height: 860 };
+let uiSize = { width: window.innerWidth || 900, height: window.innerHeight || 660 };
 
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
+
+const I18N = {
+  en: {
+    brandSub: 'Print-ready export',
+    themeAria: 'Theme',
+    langAria: 'Language',
+    lightTheme: 'Light',
+    darkTheme: 'Dark',
+    frames: 'Frames',
+    selectAll: 'Select all',
+    deselectAll: 'Deselect all',
+    loadingFrames: 'Loading frames...',
+    noFrames: 'No frames on this page',
+    pageOrder: 'Page order',
+    orderHint: 'Drag pages to set the order in the merged PDF.',
+    exportSettings: 'Export settings',
+    mode: 'Mode',
+    onePdf: 'One PDF',
+    multiFile: 'Multi-page file',
+    separateFiles: 'Separate files',
+    eachFrameZip: 'Each frame -> ZIP',
+    colorProfile: 'Color profile',
+    rgbVector: 'sRGB - Vector',
+    rgbDesc: 'Selectable text, embedded fonts',
+    cmykPrint: 'CMYK - Print',
+    cmykDesc: 'RGB->CMYK raster, for offset',
+    rgbBanner: 'Vector - selectable text, DPI-independent. Ideal for email and screen.',
+    cmykBanner: 'CMYK raster - text will not be selectable. Intended for offset print shops.',
+    pdfSize: 'PDF file size',
+    optOff: 'Off',
+    optOriginal: 'original',
+    optStandard: 'Standard',
+    optStandardHint: '~55% smaller',
+    optMax: 'Max',
+    optMaxHint: '~67% smaller',
+    optInfo: 'Safe compression for Figma vector PDFs: reduces geometry streams while text stays selectable.',
+    optMaxWarn: 'Maximum compression rounds geometry more aggressively. Check the preview for very small text and hairlines.',
+    cmykQuality: 'CMYK raster quality',
+    imageCompression: 'Image compression',
+    jpegQuality: 'JPEG quality',
+    inkLimit: 'Ink limit',
+    printOptions: 'Print options',
+    bleed: 'Bleed',
+    margin: 'Margin',
+    cropMarks: 'Crop marks',
+    whiteBg: 'White background under artwork',
+    metadata: 'PDF metadata',
+    title: 'Title',
+    author: 'Author',
+    subject: 'Subject',
+    titlePlaceholder: 'e.g. Lucja Nowak CV',
+    authorPlaceholder: 'e.g. Lucja Nowak',
+    subjectPlaceholder: 'e.g. Curriculum Vitae',
+    filename: 'Filename',
+    filenamePlaceholder: 'name without extension',
+    tokens: 'Tokens:',
+    doneDownload: 'Done - download file',
+    cancel: 'Cancel',
+    exportPdf: 'Export PDF',
+    resizeTitle: 'Resize window',
+    progressExporting: 'Exporting...',
+    fetching: 'Fetching from Figma...',
+    processing: 'Processing...',
+    packingZip: 'Packing ZIP...',
+    convertingCmyk: 'CMYK conversion...',
+    mergingPages: 'Merging pages...',
+    noExport: 'No data to export.',
+    noFramesExported: 'Could not export any frame:',
+    exportError: 'Export error: ',
+    partialExport: 'Some frames were skipped (Figma export error):',
+    pngError: 'PNG error',
+    frameCount_one: '1 frame',
+    frameCount_other: '{n} frames',
+    pagesCount_one: '1 page',
+    pagesCount_other: '{n} pages',
+    exportSeparate_one: 'Export 1 file -> ZIP',
+    exportSeparate_other: 'Export {n} files -> ZIP',
+    exportMulti_one: 'Export 1 page -> PDF',
+    exportMulti_other: 'Export {n} pages -> PDF',
+    dpiNoSelection: 'select a frame to see output dimensions',
+    dpiMore: '({name}; others proportional)',
+    clickDownloadAgain: 'Click to download again',
+    off: 'off',
+  },
+  pl: {
+    brandSub: 'Eksport gotowy do druku',
+    themeAria: 'Motyw',
+    langAria: 'Język',
+    lightTheme: 'Jasny',
+    darkTheme: 'Ciemny',
+    frames: 'Framy',
+    selectAll: 'Zaznacz wszystkie',
+    deselectAll: 'Odznacz wszystkie',
+    loadingFrames: 'Ładowanie framów...',
+    noFrames: 'Brak framów na tej stronie',
+    pageOrder: 'Kolejność stron',
+    orderHint: 'Przeciągnij stronę, aby ustawić kolejność w scalonym PDF-ie.',
+    exportSettings: 'Ustawienia eksportu',
+    mode: 'Tryb',
+    onePdf: 'Jeden PDF',
+    multiFile: 'Wielostronicowy plik',
+    separateFiles: 'Osobne pliki',
+    eachFrameZip: 'Każdy frame -> ZIP',
+    colorProfile: 'Profil koloru',
+    rgbVector: 'sRGB - Wektor',
+    rgbDesc: 'Tekst zaznaczalny, fonty osadzone',
+    cmykPrint: 'CMYK - Druk',
+    cmykDesc: 'Raster RGB->CMYK, do offsetu',
+    rgbBanner: 'Wektor - tekst zaznaczalny, niezależny od DPI. Idealny do maila i ekranu.',
+    cmykBanner: 'CMYK raster - tekst nie będzie zaznaczalny. Przeznaczony do drukarni offsetowych.',
+    pdfSize: 'Rozmiar pliku PDF',
+    optOff: 'Wył.',
+    optOriginal: 'oryginał',
+    optStandard: 'Standard',
+    optStandardHint: '~55% mniej',
+    optMax: 'Max',
+    optMaxHint: '~67% mniej',
+    optInfo: 'Bezpieczna kompresja wektorowego PDF-a z Figmy: zmniejsza strumienie geometrii, a tekst nadal zostaje zaznaczalny.',
+    optMaxWarn: 'Maksymalna kompresja mocniej zaokrągla geometrię. Sprawdź podgląd przy bardzo drobnym tekście i cienkich liniach.',
+    cmykQuality: 'Jakość rastra CMYK',
+    imageCompression: 'Kompresja obrazu',
+    jpegQuality: 'Jakość JPEG',
+    inkLimit: 'Limit farby',
+    printOptions: 'Opcje druku',
+    bleed: 'Rozpad (bleed)',
+    margin: 'Margines',
+    cropMarks: 'Znaczniki cięcia',
+    whiteBg: 'Białe tło pod treścią',
+    metadata: 'Metadane PDF',
+    title: 'Tytuł',
+    author: 'Autor',
+    subject: 'Temat',
+    titlePlaceholder: 'np. CV Łucja Nowak',
+    authorPlaceholder: 'np. Łucja Nowak',
+    subjectPlaceholder: 'np. Curriculum Vitae',
+    filename: 'Nazwa pliku',
+    filenamePlaceholder: 'nazwa bez rozszerzenia',
+    tokens: 'Tokeny:',
+    doneDownload: 'Gotowe - pobierz plik',
+    cancel: 'Anuluj',
+    exportPdf: 'Eksportuj PDF',
+    resizeTitle: 'Zmień rozmiar okna',
+    progressExporting: 'Eksportuję...',
+    fetching: 'Pobieranie z Figmy...',
+    processing: 'Przetwarzanie...',
+    packingZip: 'Pakuję ZIP...',
+    convertingCmyk: 'Konwersja CMYK...',
+    mergingPages: 'Łączę strony...',
+    noExport: 'Brak danych do eksportu.',
+    noFramesExported: 'Nie udało się wyeksportować żadnego frame\'u:',
+    exportError: 'Błąd eksportu: ',
+    partialExport: 'Część framów pominięto (błąd eksportu w Figmie):',
+    pngError: 'Błąd PNG',
+    frameCount_one: '1 frame',
+    frameCount_other: '{n} framey',
+    pagesCount_one: '1 strona',
+    pagesCount_other: '{n} stron',
+    exportSeparate_one: 'Eksportuj 1 plik -> ZIP',
+    exportSeparate_other: 'Eksportuj {n} pliki -> ZIP',
+    exportMulti_one: 'Eksportuj 1 stronę -> PDF',
+    exportMulti_other: 'Eksportuj {n} strony -> PDF',
+    dpiNoSelection: 'zaznacz frame, aby zobaczyć wymiary wyjścia',
+    dpiMore: '({name}; pozostałe proporcjonalnie)',
+    clickDownloadAgain: 'Kliknij, aby pobrać ponownie',
+    off: 'wył.',
+  },
+};
+
+function t(key, vars = {}) {
+  const dict = I18N[S.lang] || I18N.en;
+  return (dict[key] || I18N.en[key] || key).replace(/\{(\w+)\}/g, (_, name) => vars[name] != null ? vars[name] : '');
+}
+
+function plural(baseKey, n) {
+  return t(`${baseKey}_${n === 1 ? 'one' : 'other'}`, { n });
+}
+
+function setText(selector, value) {
+  const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+  if (el) el.textContent = value;
+}
+
+function setHtml(selector, value) {
+  const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
+  if (el) el.innerHTML = value;
+}
 
 function getPako() {
   const roots = [];
@@ -1492,6 +1709,173 @@ function getPako() {
   throw new Error('Nie załadowano biblioteki kompresji PDF (pako). Uruchom npm run build i wczytaj plugin ponownie.');
 }
 
+function clampUiSize(width, height) {
+  return {
+    width: Math.min(UI_MAX.width, Math.max(UI_MIN.width, Math.round(width))),
+    height: Math.min(UI_MAX.height, Math.max(UI_MIN.height, Math.round(height))),
+  };
+}
+
+function setupResizeHandle() {
+  const handle = $('resizeHandle');
+  if (!handle) return;
+  let active = false;
+  let startX = 0;
+  let startY = 0;
+  let startW = 0;
+  let startH = 0;
+  let pending = null;
+  let raf = 0;
+
+  const sendResize = size => {
+    pending = size;
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      if (!pending) return;
+      parent.postMessage({ pluginMessage: { type: 'resizeUi', ...pending } }, '*');
+    });
+  };
+
+  handle.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    active = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startW = window.innerWidth;
+    startH = window.innerHeight;
+    document.body.classList.add('resizing');
+    handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  handle.addEventListener('pointermove', e => {
+    if (!active) return;
+    uiSize = clampUiSize(startW + e.clientX - startX, startH + e.clientY - startY);
+    sendResize(uiSize);
+  });
+
+  const finish = e => {
+    if (!active) return;
+    active = false;
+    document.body.classList.remove('resizing');
+    if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
+    parent.postMessage({ pluginMessage: { type: 'saveUiSize', ...uiSize } }, '*');
+  };
+
+  handle.addEventListener('pointerup', finish);
+  handle.addEventListener('pointercancel', finish);
+}
+setupResizeHandle();
+
+function applyTheme() {
+  document.body.dataset.theme = S.theme;
+  document.querySelectorAll('[data-theme-option]').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.themeOption === S.theme);
+  });
+}
+
+function applyLocale() {
+  document.documentElement.lang = S.lang === 'pl' ? 'pl' : 'en';
+  $('themeSeg').setAttribute('aria-label', t('themeAria'));
+  $('langSeg').setAttribute('aria-label', t('langAria'));
+  setText('[data-theme-option="light"]', t('lightTheme'));
+  setText('[data-theme-option="dark"]', t('darkTheme'));
+  setText('#brandSub', t('brandSub'));
+  setText('.col-l > .card .ttl', t('frames'));
+  setText('#selectAll', t('selectAll'));
+  setText('#deselectAll', t('deselectAll'));
+  setText('#pageOrderCard .ttl', t('pageOrder'));
+  setText('.order-hint', t('orderHint'));
+  setText('.colstack > .card:first-child > .card-h .ttl', t('exportSettings'));
+  setText('#modeLbl', t('mode'));
+  setText('#modeMultiCard b', t('onePdf'));
+  setText('#modeMultiCard p', t('multiFile'));
+  setText('#modeSepCard b', t('separateFiles'));
+  setText('#modeSepCard p', t('eachFrameZip'));
+  setText('#profLbl', t('colorProfile'));
+  setText('#profileRGBCard b', t('rgbVector'));
+  setText('#profileRGBCard p', t('rgbDesc'));
+  setText('#profileCMYKCard b', t('cmykPrint'));
+  setText('#profileCMYKCard p', t('cmykDesc'));
+  setHtml('#bannerRGB span', t('rgbBanner'));
+  setHtml('#bannerCMYK span', t('cmykBanner'));
+  setText('#optimizeCard .eyebrow', t('pdfSize'));
+  setText('#optimizeGroup [data-opt="off"] b', t('optOff'));
+  setText('#optimizeGroup [data-opt="off"] span', t('optOriginal'));
+  setText('#optimizeGroup [data-opt="standard"] b', t('optStandard'));
+  setText('#optimizeGroup [data-opt="standard"] span', t('optStandardHint'));
+  setText('#optimizeGroup [data-opt="max"] b', t('optMax'));
+  setText('#optimizeGroup [data-opt="max"] span', t('optMaxHint'));
+  setText('#optimizeCard .banner.info span', t('optInfo'));
+  setText('#bannerOptMax span', t('optMaxWarn'));
+  setText('#qualityCard .eyebrow', t('cmykQuality'));
+  document.querySelector('#compression').setAttribute('aria-label', t('imageCompression'));
+  setText('#compressionLbl', t('imageCompression'));
+  setText('#jpegQualityLbl', t('jpegQuality'));
+  $('jpegQuality').setAttribute('aria-label', t('jpegQuality'));
+  setText('#inkLimitLbl', t('inkLimit'));
+  $('inkLimit').setAttribute('aria-label', t('inkLimit'));
+  setText('#printHeader .ttl', t('printOptions'));
+  setText('#printBody .check:nth-of-type(1) .lbl', t('bleed'));
+  setText('#bleedRow .lbl', t('margin'));
+  $('bleedMm').setAttribute('aria-label', t('margin'));
+  setText('#printBody .check:nth-of-type(2) .lbl', t('cropMarks'));
+  setText('#printBody .check:nth-of-type(3) .lbl', t('whiteBg'));
+  setText('#metaHeader .ttl', t('metadata'));
+  setText('#metaBody .row:nth-child(1) .lbl', t('title'));
+  setText('#metaBody .row:nth-child(2) .lbl', t('author'));
+  setText('#metaBody .row:nth-child(3) .lbl', t('subject'));
+  $('metaTitle').placeholder = t('titlePlaceholder');
+  $('metaAuthor').placeholder = t('authorPlaceholder');
+  $('metaSubject').placeholder = t('subjectPlaceholder');
+  $('metaTitle').setAttribute('aria-label', t('title'));
+  $('metaAuthor').setAttribute('aria-label', t('author'));
+  $('metaSubject').setAttribute('aria-label', t('subject'));
+  setText($('filename').closest('.card').querySelector('.ttl'), t('filename'));
+  $('filename').placeholder = t('filenamePlaceholder');
+  $('filename').setAttribute('aria-label', t('filename'));
+  setText('.tokens', t('tokens') + ' ');
+  document.querySelector('.tokens').insertAdjacentHTML('beforeend', '<code>{name}</code><code>{index}</code><code>{date}</code><code>{time}</code><code>{w}</code><code>{h}</code>');
+  setText('#resultsTitle', t('doneDownload'));
+  setText('#btnCancel', t('cancel'));
+  $('resizeHandle').title = t('resizeTitle');
+  $('resizeHandle').setAttribute('aria-label', t('resizeTitle'));
+  $('progTitle').textContent = t('progressExporting');
+  document.querySelectorAll('[data-lang-option]').forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.langOption === S.lang);
+  });
+  updateBadges();
+  if (!frames.length) $('frameList').innerHTML = `<div class="empty-state">${hasInit ? t('noFrames') : t('loadingFrames')}</div>`;
+  else $('frameCount').textContent = plural('frameCount', frames.length);
+  updateBtn();
+  updateDpiReadout();
+}
+
+function updateBadges() {
+  $('bleedBadge').textContent = S.bleed ? S.bleedMm + ' mm' : t('off');
+  $('pdfxBadge').textContent = S.pdfx ? 'PDF/X' : t('off');
+}
+
+function applyPrefs() {
+  applyTheme();
+  applyLocale();
+}
+
+document.querySelectorAll('[data-theme-option]').forEach(btn => btn.addEventListener('click', () => {
+  S.theme = btn.dataset.themeOption === 'dark' ? 'dark' : 'light';
+  applyTheme();
+  saveSettings();
+}));
+
+document.querySelectorAll('[data-lang-option]').forEach(btn => btn.addEventListener('click', () => {
+  S.lang = btn.dataset.langOption === 'pl' ? 'pl' : 'en';
+  applyLocale();
+  saveSettings();
+}));
+
+applyPrefs();
+
 // ─── Mode toggle ──────────────────────────────────────────────────────────────
 document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', e => {
   S.mode = e.target.value;
@@ -1509,16 +1893,48 @@ document.querySelectorAll('input[name="profile"]').forEach(r => r.addEventListen
   $('profileCMYKCard').classList.toggle('on', S.profile === 'cmyk');
   $('bannerRGB').classList.toggle('hidden', S.profile !== 'rgb');
   $('bannerCMYK').classList.toggle('hidden', S.profile !== 'cmyk');
+  $('optimizeCard').classList.toggle('hidden', S.profile !== 'rgb');
   $('qualityCard').classList.toggle('hidden', S.profile !== 'cmyk');
-  updateQualityUi();
+  updateDpiReadout();
 }));
 
-// ─── Quality presets ──────────────────────────────────────────────────────────
-$('qualityPresetGroup').addEventListener('click', e => {
-  const pill = e.target.closest('[data-quality]');
+// ─── PDF size / raster quality ────────────────────────────────────────────────
+$('dpiGroup').addEventListener('click', e => {
+  const pill = e.target.closest('[data-scale]');
   if (!pill) return;
-  applyQualityPreset(pill.dataset.quality);
+  S.scale = parseInt(pill.dataset.scale, 10);
+  syncQualityControls();
 });
+$('optimizeGroup').addEventListener('click', e => {
+  const pill = e.target.closest('[data-opt]');
+  if (!pill) return;
+  S.optimize = pill.dataset.opt;
+  syncQualityControls();
+});
+$('compression').addEventListener('change', e => {
+  S.compression = e.target.value === 'jpeg' ? 'jpeg' : 'flate';
+  syncQualityControls();
+});
+$('jpegQuality').addEventListener('input', e => {
+  S.jpegQuality = parseInt(e.target.value, 10) || 85;
+  syncQualityControls();
+});
+
+function syncQualityControls() {
+  document.querySelectorAll('#dpiGroup .pill').forEach(p => {
+    p.classList.toggle('on', Number(p.dataset.scale) === S.scale);
+  });
+  document.querySelectorAll('#optimizeGroup .pill').forEach(p => {
+    p.classList.toggle('on', p.dataset.opt === S.optimize);
+  });
+  $('bannerOptMax').classList.toggle('hidden', S.optimize !== 'max');
+  $('compression').value = S.compression;
+  $('jpegQualityRow').classList.toggle('hidden', S.compression !== 'jpeg');
+  $('jpegQuality').value = S.jpegQuality;
+  $('jpegQualityVal').textContent = S.jpegQuality;
+  updateDpiReadout();
+}
+syncQualityControls();
 
 // ─── Collapsible cards ────────────────────────────────────────────────────────
 ['printHeader', 'metaHeader'].forEach(hId => {
@@ -1533,11 +1949,11 @@ $('qualityPresetGroup').addEventListener('click', e => {
 $('bleedCheck').addEventListener('change', e => {
   S.bleed = e.target.checked;
   $('bleedRow').classList.toggle('hidden', !S.bleed);
-  $('bleedBadge').textContent = S.bleed ? S.bleedMm + ' mm' : 'wył.';
+  updateBadges();
 });
 $('bleedMm').addEventListener('input', e => {
   S.bleedMm = parseFloat(e.target.value) || 3;
-  $('bleedBadge').textContent = S.bleedMm + ' mm';
+  updateBadges();
 });
 $('cropCheck').addEventListener('change', e => { S.cropMarks = e.target.checked; });
 $('whiteBgCheck').addEventListener('change', e => { S.whiteBg = e.target.checked; });
@@ -1547,28 +1963,8 @@ $('inkLimit').addEventListener('input', e => {
 });
 $('pdfxCheck').addEventListener('change', e => {
   S.pdfx = e.target.checked;
-  $('pdfxBadge').textContent = S.pdfx ? 'PDF/X' : 'wył.';
+  updateBadges();
 });
-
-function applyQualityPreset(key) {
-  const preset = QUALITY_PRESETS[key] || QUALITY_PRESETS.medium;
-  S.qualityPreset = key in QUALITY_PRESETS ? key : 'medium';
-  S.optimize = preset.rgb.optimize;
-  S.scale = preset.cmyk.scale;
-  S.compression = preset.cmyk.compression;
-  S.jpegQuality = preset.cmyk.jpegQuality;
-  updateQualityUi();
-  updateDpiReadout();
-}
-
-function updateQualityUi() {
-  document.querySelectorAll('#qualityPresetGroup [data-quality]').forEach(p => {
-    p.classList.toggle('on', p.dataset.quality === S.qualityPreset);
-  });
-  const preset = QUALITY_PRESETS[S.qualityPreset] || QUALITY_PRESETS.medium;
-  $('qualityPresetNote').textContent = preset.note[S.profile] || '';
-}
-updateQualityUi();
 
 // ─── Frame list ───────────────────────────────────────────────────────────────
 $('selectAll').addEventListener('click', () => {
@@ -1589,14 +1985,20 @@ $('deselectAll').addEventListener('click', () => {
 
 function renderFrames() {
   const list = $('frameList');
-  if (!frames.length) { list.innerHTML = '<div class="empty-state">Brak framów na tej stronie</div>'; return; }
+  if (!frames.length) {
+    list.innerHTML = `<div class="empty-state">${t('noFrames')}</div>`;
+    $('frameCount').textContent = '';
+    updateBtn();
+    return;
+  }
   list.innerHTML = '';
   pageOrder = frames.map(f => f.id);
   frames.forEach(f => {
     const el = document.createElement('label');
-    el.className = 'frow checked';
+    const selected = initialSelectedIds.has(f.id);
+    el.className = 'frow' + (selected ? ' checked' : '');
     el.dataset.id = f.id;
-    el.innerHTML = `<input type="checkbox" checked><span class="frame-thumb" data-thumb="${f.id}" style="background-size:contain;background-position:center;background-repeat:no-repeat"></span><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
+    el.innerHTML = `<input type="checkbox" ${selected ? 'checked' : ''}><span class="frame-thumb" data-thumb="${f.id}" style="background-size:contain;background-position:center;background-repeat:no-repeat"></span><span class="frame-name">${esc(f.name)}</span><span class="frame-dims">${f.width}×${f.height}px</span>`;
     const thumbUrl = thumbUrls.get(f.id);
     if (thumbUrl) {
       const thumb = el.querySelector('.frame-thumb');
@@ -1607,7 +2009,7 @@ function renderFrames() {
     cb.addEventListener('change', () => { el.classList.toggle('checked', cb.checked); updateBtn(); });
     list.appendChild(el);
   });
-  $('frameCount').textContent = `${frames.length} frame${frames.length > 1 ? 'y' : ''}`;
+  $('frameCount').textContent = plural('frameCount', frames.length);
   updateBtn();
 }
 
@@ -1640,9 +2042,9 @@ function updateBtn() {
   syncPageOrder();
   const n = getSelectedIds().length;
   $('ctaWrap').classList.toggle('dis', n === 0);
-  const lbl = n === 0 ? 'Eksportuj PDF'
-    : S.mode === 'separate' ? `Eksportuj ${n} plik${n > 1 ? 'i' : ''} → ZIP`
-    : `Eksportuj ${n} stron${n > 1 ? 'y' : 'ę'} → PDF`;
+  const lbl = n === 0 ? t('exportPdf')
+    : S.mode === 'separate' ? plural('exportSeparate', n)
+    : plural('exportMulti', n);
   $('btnExportLbl').textContent = lbl;
   renderPageOrder();
   updateDpiReadout();
@@ -1655,7 +2057,12 @@ function movePage(dragId, targetId, afterTarget) {
   if (targetIndex === -1) return;
   next.splice(targetIndex + (afterTarget ? 1 : 0), 0, dragId);
   pageOrder = next;
-  renderPageOrder();
+}
+
+function clearDropTargets() {
+  document.querySelectorAll('.page-row.drop-before, .page-row.drop-after').forEach(el => {
+    el.classList.remove('drop-before', 'drop-after');
+  });
 }
 
 function renderPageOrder() {
@@ -1664,7 +2071,7 @@ function renderPageOrder() {
   const selected = pageOrder.filter(isFrameChecked);
   const show = S.mode === 'multi' && selected.length > 1;
   card.classList.toggle('hidden', !show);
-  $('pageOrderCount').textContent = show ? `${selected.length} stron` : '';
+  $('pageOrderCount').textContent = show ? plural('pagesCount', selected.length) : '';
   if (!show) { list.innerHTML = ''; return; }
 
   list.innerHTML = '';
@@ -1686,17 +2093,30 @@ function renderPageOrder() {
       draggingPageId = id;
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', id);
+      document.body.classList.add('reordering');
       el.classList.add('dragging');
     });
     el.addEventListener('dragover', e => {
       e.preventDefault();
       if (!draggingPageId || draggingPageId === id) return;
       const r = el.getBoundingClientRect();
-      movePage(draggingPageId, id, e.clientY > r.top + r.height / 2);
+      const afterTarget = e.clientY > r.top + r.height / 2;
+      clearDropTargets();
+      el.classList.toggle('drop-before', !afterTarget);
+      el.classList.toggle('drop-after', afterTarget);
     });
-    el.addEventListener('drop', e => e.preventDefault());
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!draggingPageId || draggingPageId === id) return;
+      const r = el.getBoundingClientRect();
+      movePage(draggingPageId, id, e.clientY > r.top + r.height / 2);
+      clearDropTargets();
+      renderPageOrder();
+    });
     el.addEventListener('dragend', () => {
       draggingPageId = null;
+      document.body.classList.remove('reordering');
+      clearDropTargets();
       renderPageOrder();
     });
     list.appendChild(el);
@@ -1715,11 +2135,11 @@ function updateDpiReadout() {
   const mm = px => fmt(px / 96 * 25.4);
   let detail;
   if (!sel.length) {
-    detail = '<span class="dpi-dim">zaznacz frame, aby zobaczyć wymiary wyjścia</span>';
+    detail = `<span class="dpi-dim">${t('dpiNoSelection')}</span>`;
   } else {
     const f = sel[0];
     const ow = Math.round(f.width * S.scale), oh = Math.round(f.height * S.scale);
-    const more = sel.length > 1 ? ` <span class="dpi-dim">(${esc(f.name)}; pozostałe proporcjonalnie)</span>` : '';
+    const more = sel.length > 1 ? ` <span class="dpi-dim">${esc(t('dpiMore', { name: f.name }))}</span>` : '';
     detail = `<span class="dpi-dim">${f.width}×${f.height} px →</span> ${ow}×${oh} px` +
       ` <span class="dpi-dim">· ${mm(f.width)}×${mm(f.height)} mm</span>${more}`;
   }
@@ -1731,11 +2151,12 @@ function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 // ─── Settings persistence (figma.clientStorage) ───────────────────────────────
 function collectSettings() {
   return {
-    mode: S.mode, profile: S.profile, qualityPreset: S.qualityPreset, scale: S.scale,
+    mode: S.mode, profile: S.profile, lang: S.lang, theme: S.theme, scale: S.scale,
     bleed: S.bleed, bleedMm: S.bleedMm, cropMarks: S.cropMarks,
     whiteBg: S.whiteBg, inkLimit: S.inkLimit, pdfx: S.pdfx,
     compression: S.compression, jpegQuality: S.jpegQuality,
     optimize: S.optimize,
+    uiSize: clampUiSize(window.innerWidth || uiSize.width, window.innerHeight || uiSize.height),
     filename: $('filename').value, metaTitle: $('metaTitle').value, metaAuthor: $('metaAuthor').value,
   };
 }
@@ -1755,15 +2176,19 @@ function applySettings(s) {
   };
   if (s.mode) setRadio('mode', s.mode);
   if (s.profile) setRadio('profile', s.profile);
-  if (s.qualityPreset) {
-    applyQualityPreset(s.qualityPreset);
-  } else if (s.optimize === 'max' || s.scale === 2) {
-    applyQualityPreset('low');
-  } else if (s.optimize === 'off' || s.scale === 4) {
-    applyQualityPreset('high');
-  } else {
-    applyQualityPreset('medium');
-  }
+  S.lang = s.lang === 'pl' ? 'pl' : 'en';
+  S.theme = s.theme === 'dark' ? 'dark' : 'light';
+  applyTheme();
+  const legacyQuality = {
+    low: { optimize: 'max', scale: 2, compression: 'jpeg', jpegQuality: 70 },
+    medium: { optimize: 'standard', scale: 3, compression: 'jpeg', jpegQuality: 85 },
+    high: { optimize: 'off', scale: 4, compression: 'flate', jpegQuality: 98 },
+  }[s.qualityPreset] || null;
+  S.optimize = s.optimize || (legacyQuality && legacyQuality.optimize) || S.optimize;
+  S.scale = s.scale || (legacyQuality && legacyQuality.scale) || S.scale;
+  S.compression = s.compression || (legacyQuality && legacyQuality.compression) || S.compression;
+  S.jpegQuality = s.jpegQuality || (legacyQuality && legacyQuality.jpegQuality) || S.jpegQuality;
+  syncQualityControls();
   const setCheck = (id, val, type = 'change') => {
     const el = $(id); if (el && typeof val === 'boolean') { el.checked = val; fire(el, type); }
   };
@@ -1776,7 +2201,8 @@ function applySettings(s) {
   if (s.filename != null) $('filename').value = s.filename;
   if (s.metaTitle != null) $('metaTitle').value = s.metaTitle;
   if (s.metaAuthor != null) $('metaAuthor').value = s.metaAuthor;
-  updateBtn();
+  if (s.uiSize) uiSize = clampUiSize(s.uiSize.width, s.uiSize.height);
+  applyLocale();
 }
 
 // ─── Filename templates ───────────────────────────────────────────────────────
@@ -1809,7 +2235,7 @@ $('btnExport').addEventListener('click', () => {
   if (!ids.length) return;
   exportErrors = [];
   saveSettings();
-  showProgress('Pobieranie z Figmy...', 0);
+  showProgress(t('fetching'), 0);
   $('resultsCard').classList.remove('visible');
   const format = S.profile === 'cmyk' ? 'PNG' : 'PDF';
   parent.postMessage({ pluginMessage: { type: 'export', frameIds: ids, format, scale: S.scale } }, '*');
@@ -1821,7 +2247,9 @@ window.onmessage = async evt => {
   const msg = evt.data.pluginMessage;
   if (!msg) return;
   if (msg.type === 'init') {
+    hasInit = true;
     frames = msg.frames;
+    initialSelectedIds = new Set(msg.selectedFrameIds || []);
     renderFrames();
     if (msg.settings) applySettings(msg.settings);
   }
@@ -1835,7 +2263,7 @@ window.onmessage = async evt => {
   }
   if (msg.type === 'progress') {
     const pct = Math.round(msg.current / msg.total * 65);
-    showProgress(`Eksportuję ${msg.current}/${msg.total}`, pct, msg.name);
+    showProgress(`${t('progressExporting')} ${msg.current}/${msg.total}`, pct, msg.name);
   }
   if (msg.type === 'exportError') {
     exportErrors.push(`${msg.name}: ${msg.message}`);
@@ -1844,16 +2272,16 @@ window.onmessage = async evt => {
     if (!msg.data.length) {
       hideProgress();
       alert(exportErrors.length
-        ? 'Nie udało się wyeksportować żadnego frame\'u:\n\n' + exportErrors.join('\n')
-        : 'Brak danych do eksportu.');
+        ? t('noFramesExported') + '\n\n' + exportErrors.join('\n')
+        : t('noExport'));
       exportErrors = [];
       return;
     }
-    showProgress('Przetwarzanie...', 70);
+    showProgress(t('processing'), 70);
     try { await handleExportDone(msg.data); }
-    catch (err) { hideProgress(); alert('Błąd eksportu: ' + err.message); }
+    catch (err) { hideProgress(); alert(t('exportError') + err.message); }
     if (exportErrors.length) {
-      alert('Część framów pominięto (błąd eksportu w Figmie):\n\n' + exportErrors.join('\n'));
+      alert(t('partialExport') + '\n\n' + exportErrors.join('\n'));
     }
     exportErrors = [];
   }
@@ -1879,13 +2307,13 @@ async function handleExportDone(data) {
         const pdf = await buildCmykPdf([data[i]]);
         zip.file(fileName(i) + '.pdf', pdf);
       }
-      showProgress('Pakuję ZIP...', 96);
+      showProgress(t('packingZip'), 96);
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
       const url = URL.createObjectURL(blob);
       triggerDownload(url, archiveName + '.zip');
       showResults([{ name: archiveName + '.zip', size: blob.size, url }]);
     } else {
-      showProgress('Konwersja CMYK...', 72, `${data.length} strony`);
+      showProgress(t('convertingCmyk'), 72, plural('pagesCount', data.length));
       const pdf = await buildCmykPdf(data);
       const blob = new Blob([pdf], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -1900,13 +2328,13 @@ async function handleExportDone(data) {
         const pdf = await buildSingleRgbPdf(new Uint8Array(data[i].bytes));
         zip.file(fileName(i) + '.pdf', pdf);
       }
-      showProgress('Pakuję ZIP...', 96);
+      showProgress(t('packingZip'), 96);
       const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
       const url = URL.createObjectURL(blob);
       triggerDownload(url, archiveName + '.zip');
       showResults([{ name: archiveName + '.zip', size: blob.size, url }]);
     } else {
-      showProgress('Łączę strony...', 78);
+      showProgress(t('mergingPages'), 78);
       const pdf = await buildMergedRgbPdf(data);
       const blob = new Blob([pdf], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -2041,7 +2469,7 @@ async function pngToRgba(pngBytes) {
       URL.revokeObjectURL(url);
       resolve({ imgW: img.width, imgH: img.height, rgba: ctx.getImageData(0, 0, img.width, img.height).data });
     };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Błąd PNG')); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(t('pngError'))); };
     img.src = url;
   });
 }
@@ -2067,7 +2495,7 @@ function showResults(items) {
     const el = document.createElement('div');
     el.className = 'result-item';
     el.innerHTML = `<svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l4 4v14H7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="result-name">${esc(name)}</span><span class="result-size">${sizeStr}</span>`;
-    if (url) { el.title = 'Kliknij, aby pobrać ponownie'; el.addEventListener('click', () => triggerDownload(url, name)); }
+    if (url) { el.title = t('clickDownloadAgain'); el.addEventListener('click', () => triggerDownload(url, name)); }
     list.appendChild(el);
   });
   $('resultsCard').classList.add('visible');
