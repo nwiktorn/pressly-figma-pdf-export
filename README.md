@@ -16,7 +16,7 @@ Print-ready PDF export plugin for Figma.
 - **Quality of life** — recursive frame discovery inside Figma sections, frame
   thumbnails, initial selection mirrored from Figma and shown first in the picker,
   English UI by default with Polish switcher, light/dark theme switcher, settings
-  remembered via `clientStorage`, drag-and-drop page ordering for merged PDFs, filename
+  remembered via `clientStorage`, always-visible page ordering for merged PDFs, filename
   templates (`{name}`
   `{index}` `{date}` `{time}` `{w}` `{h}`).
 

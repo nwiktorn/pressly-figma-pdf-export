@@ -156,6 +156,8 @@ All UI state is the `S` object in `src/ui.html`.
   `Jeden PDF` mode, a left-column `Kolejność stron` panel appears under the
   frame list. It mirrors selected frames, uses drag-and-drop insertion indicators
   and mutates `pageOrder` on drop; `getSelectedIds()` exports using that order.
+  The left column is a split sticky panel: the frame picker and page-order list
+  scroll independently so page ordering stays visible in large files.
 - **Settings persistence** via `clientStorage` (`collectSettings`/`applySettings`;
   applySettings drives the real controls so dependent UI updates). The same
   settings object stores `lang` and `theme`.
