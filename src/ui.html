@@ -208,7 +208,7 @@ input[type=range] { accent-color: var(--accent); }
 .tokens code { font-family: var(--mono); font-size: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 5px; color: var(--muted); }
 
 /* ── footer ── */
-.footer { display: flex; gap: 10px; padding: 13px 34px 13px 20px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.footer { display: flex; gap: 10px; padding: 13px 20px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
 .footer .spacer { flex: 1; }
 .btn { font: inherit; font-size: 13px; font-weight: 600; border-radius: 11px; padding: 11px 16px; cursor: pointer; border: 1px solid transparent; transition: .15s; }
 .btn-ghost { background: var(--surface); border-color: var(--border-2); color: var(--muted); }
@@ -240,15 +240,6 @@ input[type=range] { accent-color: var(--accent); }
 .prog-bar-bg { width: 260px; height: 7px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
 .prog-bar-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg,var(--g1),var(--g2),var(--g3)); transition: width .3s ease; }
 .prog-sub { font-size: 11.5px; color: var(--faint); font-family: var(--mono); }
-
-/* resize handle */
-.resize-handle { position: fixed; right: 7px; bottom: 7px; width: 18px; height: 18px; border: 0; border-radius: 5px; background: transparent; cursor: nwse-resize; z-index: 30; opacity: .58; transition: opacity .14s, background .14s; }
-.resize-handle::before { content: ""; position: absolute; inset: 4px; background:
-  linear-gradient(135deg, transparent 0 48%, var(--faint) 49% 54%, transparent 55%),
-  linear-gradient(135deg, transparent 0 64%, var(--faint) 65% 70%, transparent 71%);
-}
-.resize-handle:hover, .resize-handle:focus-visible { opacity: 1; background: var(--surface-2); outline: none; }
-body.resizing, body.resizing * { cursor: nwse-resize !important; user-select: none !important; }
 
 /* ── results ── */
 .results-card { display: none; margin-top: 14px; border: 1px solid #b7ecd2; border-radius: var(--r); overflow: hidden; }
@@ -458,7 +449,6 @@ body.resizing, body.resizing * { cursor: nwse-resize !important; user-select: no
     <button id="btnExport"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="btnExportLbl">Export PDF</span></button>
   </div>
 </div>
-<button class="resize-handle" id="resizeHandle" type="button" title="Resize window" aria-label="Resize window"></button>
 
 </div><!-- /app -->
 
@@ -479,9 +469,6 @@ let hasInit = false;
 let initialSelectedIds = new Set();
 const thumbUrls = new Map();
 const S = { mode: 'multi', profile: 'rgb', lang: 'en', theme: 'light', scale: 3, bleed: false, bleedMm: 3, cropMarks: false, whiteBg: true, inkLimit: 320, pdfx: false, compression: 'flate', jpegQuality: 85, optimize: 'standard' };
-const UI_MIN = { width: 760, height: 520 };
-const UI_MAX = { width: 1200, height: 860 };
-let uiSize = { width: window.innerWidth || 900, height: window.innerHeight || 660 };
 
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -692,65 +679,6 @@ function getPako() {
   throw new Error('Nie załadowano biblioteki kompresji PDF (pako). Uruchom npm run build i wczytaj plugin ponownie.');
 }
 
-function clampUiSize(width, height) {
-  return {
-    width: Math.min(UI_MAX.width, Math.max(UI_MIN.width, Math.round(width))),
-    height: Math.min(UI_MAX.height, Math.max(UI_MIN.height, Math.round(height))),
-  };
-}
-
-function setupResizeHandle() {
-  const handle = $('resizeHandle');
-  if (!handle) return;
-  let active = false;
-  let startX = 0;
-  let startY = 0;
-  let startW = 0;
-  let startH = 0;
-  let pending = null;
-  let raf = 0;
-
-  const sendResize = size => {
-    pending = size;
-    if (raf) return;
-    raf = requestAnimationFrame(() => {
-      raf = 0;
-      if (!pending) return;
-      parent.postMessage({ pluginMessage: { type: 'resizeUi', ...pending } }, '*');
-    });
-  };
-
-  handle.addEventListener('pointerdown', e => {
-    if (e.button !== 0) return;
-    active = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    startW = window.innerWidth;
-    startH = window.innerHeight;
-    document.body.classList.add('resizing');
-    handle.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  });
-
-  handle.addEventListener('pointermove', e => {
-    if (!active) return;
-    uiSize = clampUiSize(startW + e.clientX - startX, startH + e.clientY - startY);
-    sendResize(uiSize);
-  });
-
-  const finish = e => {
-    if (!active) return;
-    active = false;
-    document.body.classList.remove('resizing');
-    if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
-    parent.postMessage({ pluginMessage: { type: 'saveUiSize', ...uiSize } }, '*');
-  };
-
-  handle.addEventListener('pointerup', finish);
-  handle.addEventListener('pointercancel', finish);
-}
-setupResizeHandle();
-
 function applyTheme() {
   document.body.dataset.theme = S.theme;
   document.querySelectorAll('[data-theme-option]').forEach(btn => {
@@ -822,8 +750,6 @@ function applyLocale() {
   document.querySelector('.tokens').insertAdjacentHTML('beforeend', '<code>{name}</code><code>{index}</code><code>{date}</code><code>{time}</code><code>{w}</code><code>{h}</code>');
   setText('#resultsTitle', t('doneDownload'));
   setText('#btnCancel', t('cancel'));
-  $('resizeHandle').title = t('resizeTitle');
-  $('resizeHandle').setAttribute('aria-label', t('resizeTitle'));
   $('progTitle').textContent = t('progressExporting');
   document.querySelectorAll('[data-lang-option]').forEach(btn => {
     btn.classList.toggle('on', btn.dataset.langOption === S.lang);
@@ -1139,7 +1065,6 @@ function collectSettings() {
     whiteBg: S.whiteBg, inkLimit: S.inkLimit, pdfx: S.pdfx,
     compression: S.compression, jpegQuality: S.jpegQuality,
     optimize: S.optimize,
-    uiSize: clampUiSize(window.innerWidth || uiSize.width, window.innerHeight || uiSize.height),
     filename: $('filename').value, metaTitle: $('metaTitle').value, metaAuthor: $('metaAuthor').value,
   };
 }
@@ -1184,7 +1109,6 @@ function applySettings(s) {
   if (s.filename != null) $('filename').value = s.filename;
   if (s.metaTitle != null) $('metaTitle').value = s.metaTitle;
   if (s.metaAuthor != null) $('metaAuthor').value = s.metaAuthor;
-  if (s.uiSize) uiSize = clampUiSize(s.uiSize.width, s.uiSize.height);
   applyLocale();
 }
 

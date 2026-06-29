@@ -15,8 +15,8 @@ Print-ready PDF export plugin for Figma.
   white background, PDF metadata (title/author/dates/ID).
 - **Quality of life** — frame thumbnails, initial selection mirrored from Figma,
   English UI by default with Polish switcher, light/dark theme switcher, settings
-  remembered via `clientStorage`, resizable plugin window, drag-and-drop page
-  ordering for merged PDFs, filename templates (`{name}`
+  remembered via `clientStorage`, drag-and-drop page ordering for merged PDFs,
+  filename templates (`{name}`
   `{index}` `{date}` `{time}` `{w}` `{h}`).
 
 Runs fully locally — no network access (see `manifest.json`).

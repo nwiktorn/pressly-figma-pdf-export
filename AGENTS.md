@@ -148,15 +148,11 @@ All UI state is the `S` object in `src/ui.html`.
   and mutates `pageOrder` on drop; `getSelectedIds()` exports using that order.
 - **Settings persistence** via `clientStorage` (`collectSettings`/`applySettings`;
   applySettings drives the real controls so dependent UI updates). The same
-  settings object stores `uiSize`, `lang`, and `theme`.
+  settings object stores `lang` and `theme`.
 - **Language/theme preferences**: English is the default UI language, Polish is
   available from the topbar, and light/dark theme is also controlled from the
   topbar. User-facing strings live in the `I18N` dictionary in `src/ui.html`;
   keep both `en` and `pl` entries in sync.
-- **Resizable window**: `src/ui.html` renders a bottom-right resize handle, sends
-  `resizeUi` while dragging, then `saveUiSize` on release. `code.js` clamps to
-  760×520–1200×860 and calls `figma.ui.resize`; startup reads `uiSize` before
-  `showUI` so the window opens at the remembered size.
 - **Filename templates**: `{name} {index} {date} {time} {w} {h}`; auto per-file
   index in ZIP mode (`applyTemplate`).
 
@@ -254,7 +250,7 @@ filename templates, release prep · CMYK JPEG · DPI readout · font/image dedup
 **Aurora UI redesign** (two-column 900 px layout, animated conic-gradient borders,
 Google/Gemini palette, SVG icons, accessible collapsible cards) · RGB precision
 optimization · page ordering for merged PDFs · explicit CMYK raster quality
-controls · resizable plugin window · light/dark and EN/PL preferences.
+controls · light/dark and EN/PL preferences.
 
 Possible next steps (not started):
 - **Image downscale/JPEG in the RGB path** — complementary lever for a CV with a

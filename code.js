@@ -1,22 +1,10 @@
 const EXPORTABLE = ['FRAME', 'COMPONENT', 'SECTION'];
 const SETTINGS_KEY = 'pressly-pdf-export-settings';
 const THUMB_WIDTH = 64; // px wide preview per frame
-const DEFAULT_UI_SIZE = { width: 900, height: 660 };
-const MIN_UI_SIZE = { width: 760, height: 520 };
-const MAX_UI_SIZE = { width: 1200, height: 860 };
 
 let cachedSettings = null;
 
-figma.showUI(__html__, { ...DEFAULT_UI_SIZE, title: 'Pressly - PDF Export' });
-
-function clampUiSize(size) {
-  const width = Math.round(Number(size && size.width) || DEFAULT_UI_SIZE.width);
-  const height = Math.round(Number(size && size.height) || DEFAULT_UI_SIZE.height);
-  return {
-    width: Math.min(MAX_UI_SIZE.width, Math.max(MIN_UI_SIZE.width, width)),
-    height: Math.min(MAX_UI_SIZE.height, Math.max(MIN_UI_SIZE.height, height)),
-  };
-}
+figma.showUI(__html__, { width: 900, height: 660, title: 'Pressly - PDF Export' });
 
 function getFrames() {
   return figma.currentPage.children
@@ -61,10 +49,6 @@ async function pushInit() {
 
 async function start() {
   try { cachedSettings = await figma.clientStorage.getAsync(SETTINGS_KEY); } catch (e) {}
-  const uiSize = clampUiSize(cachedSettings && cachedSettings.uiSize);
-  if (uiSize.width !== DEFAULT_UI_SIZE.width || uiSize.height !== DEFAULT_UI_SIZE.height) {
-    figma.ui.resize(uiSize.width, uiSize.height);
-  }
   pushInit();
 }
 
@@ -81,19 +65,6 @@ figma.ui.onmessage = async (msg) => {
 
   if (msg.type === 'saveSettings') {
     cachedSettings = msg.settings;
-    try { await figma.clientStorage.setAsync(SETTINGS_KEY, cachedSettings); } catch (e) {}
-    return;
-  }
-
-  if (msg.type === 'resizeUi') {
-    const size = clampUiSize(msg);
-    figma.ui.resize(size.width, size.height);
-    return;
-  }
-
-  if (msg.type === 'saveUiSize') {
-    const size = clampUiSize(msg);
-    cachedSettings = { ...(cachedSettings || {}), uiSize: size };
     try { await figma.clientStorage.setAsync(SETTINGS_KEY, cachedSettings); } catch (e) {}
     return;
   }
