@@ -1,4 +1,4 @@
-// Build script for Pressly - PDF Export.
+// Build script for Finally — Better exports for Figma.
 //
 // Figma plugin UIs are a single self-contained HTML document with no access to
 // the local filesystem or relative URLs. To avoid depending on a CDN at runtime

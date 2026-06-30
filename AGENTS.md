@@ -1,4 +1,4 @@
-# AGENTS.md — agent onboarding for Pressly - PDF Export
+# AGENTS.md — agent onboarding for Finally — Better exports for Figma
 
 > Vendor-neutral agent guide (read by Cursor and other AI coding tools; Claude
 > Code reaches it via the small `CLAUDE.md` pointer). This is the canonical doc.
@@ -10,7 +10,7 @@ and the non-obvious decisions behind them, so you can be productive immediately.
 
 ## 1. What this is
 
-**Pressly - PDF Export** is a **Figma plugin** that exports frames to **print-ready and
+**Finally — Better exports for Figma** is a **Figma plugin** that exports frames to **print-ready and
 share-ready PDFs**. It is aimed at people who need real prepress output (posters,
 flyers, CVs, multi-page documents) directly from Figma, not just a screenshot.
 
@@ -40,8 +40,9 @@ Everything runs **locally inside the plugin** — no network calls, no uploads.
 | `assets/CoatedFOGRA39.icc` | Default CMYK output profile, embedded for PDF/X (see `NOTICE.md`). |
 | `assets/icon.svg` | Plugin icon for the Community listing. |
 | `build.mjs` | Inlines vendored libs + app modules + ICC profile into `ui.html`. |
-| `test/pdf-core.test.mjs` | Node test suite (`npm test`). 18 tests. |
+| `test/pdf-core.test.mjs` | Node test suite (`npm test`). 31 tests. |
 | `docs/community.md` | Figma Community listing copy + publish checklist. |
+| `publikacja/screenshots/` | Prepared PNG screenshots for the Figma Community listing. |
 | `docs/size-optimization.md` | **Design doc** — why Figma vector PDFs are large (6-digit coords) and the planned precision-reduction shrink that beats Ghostscript while keeping text selectable. |
 | `README.md` | User/dev-facing overview. |
 | `NOTICE.md` | Third-party attributions (ICC profile, libraries). |
@@ -170,8 +171,10 @@ All UI state is the `S` object in `src/ui.html`.
 
 ### Aurora UI (src/ui.html)
 - **Two-column layout** (900 px): left column sticky frame list, right column settings stack.
-- **Topbar**: animated conic-gradient logo, plugin name, current Figma page dot,
-  compact light/dark theme switcher, and EN/PL language switcher.
+- **Topbar**: inline Finally wordmark with light/dark SVG variants, current
+  Figma page dot, compact light/dark theme switcher, and EN/PL language switcher.
+- **Brand assets**: `assets/icon.svg` contains the square Community/plugin icon;
+  the listing screenshot set lives in `publikacja/screenshots/`.
 - **Toggle cards** (`.opt`): selected state uses `::before` masked conic-gradient ring
   (`@property --angle` + `animation: spin`). Same technique on the export CTA button.
 - **Collapsible cards**: `<button class="card-h click" aria-expanded>` + chevron SVG;
@@ -231,6 +234,8 @@ All UI state is the `S` object in `src/ui.html`.
   shops can supply their own profile.
 - **Generated `ui.html` is large (~1.35 MB)** because of the inlined ICC profile
   (~650 KB) and libraries. That is expected and loads once.
+- **Manifest ID.** The Figma Community plugin ID is `1653737759217582417`; keep
+  that value in `manifest.json` after publishing starts.
 - **`rtk` is NOT installed here** despite the global CLAUDE.md mandating an `rtk`
   prefix on git/npm. Use plain `git`/`npm`. (Also recorded in agent memory.)
 
@@ -259,10 +264,10 @@ importing the plugin in Figma.
 Done (committed): P0 build/bundling/async API · P1 print-correct CMYK core +
 tests · P2 bundled FOGRA39 / PDF/X-1a · P3 thumbnails, persisted settings,
 filename templates, release prep · CMYK JPEG · DPI readout · font/image dedup ·
-**Aurora UI redesign** (two-column 900 px layout, animated conic-gradient borders,
-Google/Gemini palette, SVG icons, accessible collapsible cards) · RGB precision
+  **Aurora UI redesign** (two-column 900 px layout, animated conic-gradient borders,
+Google/Gemini palette, Finally logo, SVG icons, accessible collapsible cards) · RGB precision
 optimization · page ordering for merged PDFs · explicit CMYK raster quality
-controls · light/dark and EN/PL preferences.
+controls · light/dark and EN/PL preferences · Community screenshot set.
 
 Possible next steps (not started):
 - **Image downscale/JPEG in the RGB path** — complementary lever for a CV with a

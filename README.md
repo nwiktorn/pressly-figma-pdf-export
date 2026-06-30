@@ -1,4 +1,4 @@
-# Pressly - PDF Export
+# Finally — Better exports for Figma
 
 Print-ready PDF export plugin for Figma.
 
@@ -44,6 +44,8 @@ prototype's tokens and component patterns.
 | `src/lib/pdf-core.js` | Pure (DOM-free) CMYK PDF builder — unit-tested in Node. |
 | `src/lib/pdf-merge.js` | Cross-page stream (font/image) deduplication for merged RGB PDFs. |
 | `assets/CoatedFOGRA39.icc` | Default CMYK output profile (ECI, see `NOTICE.md`), embedded for PDF/X. |
+| `assets/icon.svg` | Community/plugin icon based on the Finally logo mark. |
+| `publikacja/screenshots/` | Prepared PNG screenshots for the Figma Community listing. |
 | `build.mjs` | Inlines the vendored libraries, `pdf-core`, and the ICC profile into `src/ui.html` → `ui.html`. |
 | `test/` | Node tests for the PDF core. Run `npm test`. |
 
@@ -67,3 +69,9 @@ and pick `manifest.json`. After editing `src/ui.html` run `npm run build` and
 re-run the plugin.
 
 > Edit `src/ui.html`, never the generated `ui.html`.
+
+## Publishing
+
+The manifest uses the Figma Community plugin ID `1653737759217582417`.
+Community listing copy lives in [`docs/community.md`](docs/community.md), and
+the current screenshot set is in `publikacja/screenshots/`.

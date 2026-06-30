@@ -1,11 +1,11 @@
 const EXPORTABLE = ['FRAME', 'COMPONENT'];
 const WALKABLE = ['SECTION', 'GROUP'];
-const SETTINGS_KEY = 'pressly-pdf-export-settings';
+const SETTINGS_KEY = 'finally-better-exports-settings';
 const THUMB_WIDTH = 64; // px wide preview per frame
 
 let cachedSettings = null;
 
-figma.showUI(__html__, { width: 900, height: 660, title: 'Pressly - PDF Export' });
+figma.showUI(__html__, { width: 900, height: 660, title: 'Finally — Better exports for Figma' });
 
 function frameInfo(node, sectionName = '') {
   return {

@@ -1,7 +1,7 @@
 {
-  "name": "pressly-pdf-export",
+  "name": "finally-better-exports",
   "version": "0.2.0",
-  "description": "Pressly - PDF Export — print-ready PDF export plugin for Figma (RGB vector + CMYK raster, bleed, crop marks, PDF/X-1a).",
+  "description": "Finally — Better exports for Figma. Print-ready PDF export plugin for Figma (RGB vector + CMYK raster, bleed, crop marks, PDF/X-1a).",
   "license": "MIT",
   "private": true,
   "scripts": {

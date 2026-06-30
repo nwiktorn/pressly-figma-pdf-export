@@ -1,11 +1,11 @@
 # Figma Community listing
 
-Copy and assets for publishing **Pressly - PDF Export** to the Figma Community.
+Copy and assets for publishing **Finally — Better exports for Figma** to the Figma Community.
 Publishing itself is done from Figma (Plugins → Manage → Publish); this file is
 the source of truth for the listing text.
 
 ## Name
-Pressly - PDF Export
+Finally — Better exports for Figma
 
 ## Tagline (one line)
 Print-ready PDF export — CMYK, bleed, crop marks and PDF/X-1a.
@@ -33,11 +33,17 @@ pdf, export, print, cmyk, prepress, pdf-x, bleed, crop-marks
 
 ## Assets
 - `assets/icon.svg` — plugin icon (export to 128×128 PNG for the listing).
-- Cover image and screenshots: capture from the running plugin before publishing.
+- `publikacja/screenshots/01-rgb-vector-export.png` — RGB/vector export workflow.
+- `publikacja/screenshots/02-cmyk-print-settings.png` — CMYK print controls.
+- `publikacja/screenshots/03-dark-theme-workflow.png` — dark theme workflow.
+- `publikacja/screenshots/04-polish-interface.png` — Polish localization.
+
+## Figma plugin ID
+`manifest.json` uses the Community plugin ID `1653737759217582417`.
 
 ## Pre-publish checklist
 - [ ] `npm run build` produces a current `ui.html`
 - [ ] `npm test` is green
-- [ ] Icon exported to PNG
-- [ ] Cover + at least one screenshot prepared
+- [ ] Icon exported to PNG from `assets/icon.svg`
+- [x] Screenshot set prepared in `publikacja/screenshots/`
 - [ ] Test an RGB merge, a CMYK ZIP, and a PDF/X export on a real document

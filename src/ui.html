@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pressly - PDF Export</title>
+<title>Finally — Better exports for Figma</title>
 <!-- @INJECT:VENDOR_LIBS -->
 <!-- pdf-lib, jszip and pako are inlined here at build time.
      Edit src/ui.html, then run `npm run build` to regenerate the root ui.html.
@@ -59,7 +59,7 @@ html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var
 @keyframes flow { to { background-position: 200% 0; } }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .logo, .opt.on::before, .cta::before, .spinner { animation: none !important; }
+  .opt.on::before, .cta::before, .spinner { animation: none !important; }
 }
 
 /* ── app shell ── */
@@ -67,14 +67,11 @@ html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var
 
 /* ── topbar ── */
 .topbar { display: flex; align-items: center; gap: 11px; padding: 13px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.logo { width: 30px; height: 30px; border-radius: 9px; flex: none; position: relative; display: grid; place-items: center;
-  background: conic-gradient(from var(--angle), var(--g1),var(--g2),var(--g3),var(--g4),var(--g1));
-  animation: spin var(--spin) linear infinite; }
-.logo::after { content: ""; position: absolute; inset: 2px; border-radius: 7px; background: var(--surface); }
-.logo svg { position: relative; z-index: 1; width: 16px; height: 16px; }
-.brand { display: flex; flex-direction: column; line-height: 1.15; }
-.brand b { font-size: 13.5px; font-weight: 650; letter-spacing: -.01em; }
-.brand span { font-size: 11px; color: var(--faint); }
+.brand-logo { width: 143px; height: 30px; flex: none; display: block; color: var(--fg); }
+.brand-logo svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.brand-logo svg.brand-logo-dark { display: none; }
+body[data-theme="dark"] .brand-logo svg.brand-logo-light { display: none; }
+body[data-theme="dark"] .brand-logo svg.brand-logo-dark { display: block; }
 .topbar-page { margin-left: auto; font-size: 11px; color: var(--faint); font-family: var(--mono); display: flex; align-items: center; gap: 6px; }
 .pgdot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex: none; }
 .topbar-controls { display: flex; align-items: center; gap: 8px; flex: none; }
@@ -267,10 +264,42 @@ input[type=range] { accent-color: var(--accent); }
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#5b5bf0" stroke-width="1.6"/><path d="M13 3v5h5" stroke="#5b5bf0" stroke-width="1.6"/><text x="12" y="17.5" font-size="6.5" font-weight="700" fill="#5b5bf0" text-anchor="middle" font-family="sans-serif">PDF</text></svg>
+  <div class="brand-logo" role="img" aria-label="Finally - Better exports for Figma">
+    <svg class="brand-logo-light" width="362" height="76" viewBox="0 0 362 76" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M65.5472 10.1357L54.5394 -5.46548e-06L-8.33154e-06 -4.81511e-06L-7.62939e-06 58.8807L76.0542 58.8807L76.0542 19.0135L65.5472 10.1357ZM11.0401 47.8405L11.0401 11.0401L44.097 11.0401L44.097 30.2717L65.0141 30.2717L65.0141 47.8405L11.0401 47.8405Z" fill="url(#finallyLogoLightGradient)"/>
+      <path d="M310.418 16.8772H322.064L340.207 57.1294L330.755 58.8171L310.418 16.8772ZM361.725 16.8772L332.696 75.6944H321.304L333.709 52.5726L349.995 16.8772H361.725Z" fill="black"/>
+      <path d="M292.15 3.8147e-06H303.12V58.8172H292.15V3.8147e-06Z" fill="black"/>
+      <path d="M269.241 3.8147e-06H280.211V58.8172H269.241V3.8147e-06Z" fill="black"/>
+      <path d="M227.836 59.7454C223.673 59.7454 219.875 58.8453 216.444 57.045C213.068 55.1885 210.368 52.6288 208.343 49.3659C206.374 46.0467 205.389 42.2212 205.389 37.8894C205.389 33.445 206.402 29.5914 208.427 26.3285C210.452 23.0655 213.181 20.5339 216.613 18.7337C220.101 16.8772 224.039 15.949 228.427 15.949C233.265 15.949 237.147 16.9335 240.072 18.9025C243.054 20.8152 245.219 23.4312 246.57 26.7504C247.92 30.0696 248.595 33.7826 248.595 37.8894C248.595 40.3647 248.201 42.8963 247.414 45.4841C246.626 48.0157 245.416 50.3785 243.785 52.5726C242.153 54.7103 240.016 56.4543 237.372 57.8045C234.727 59.0984 231.549 59.7454 227.836 59.7454ZM231.38 51.3068C234.699 51.3068 237.568 50.7442 239.988 49.619C242.407 48.4939 244.263 46.9187 245.557 44.8934C246.851 42.8681 247.498 40.5335 247.498 37.8894C247.498 35.0202 246.823 32.6012 245.473 30.6321C244.179 28.6069 242.322 27.0879 239.903 26.0753C237.54 25.0064 234.699 24.472 231.38 24.472C226.711 24.472 223.082 25.7096 220.494 28.1849C217.906 30.604 216.613 33.8388 216.613 37.8894C216.613 40.5897 217.231 42.9525 218.469 44.9778C219.707 46.9468 221.423 48.4939 223.617 49.619C225.867 50.7442 228.455 51.3068 231.38 51.3068ZM247.498 16.8772H258.468V58.8171H248.257C248.257 58.8171 248.173 58.2827 248.004 57.2138C247.892 56.0886 247.779 54.6822 247.667 52.9945C247.554 51.3068 247.498 49.6472 247.498 48.0157V16.8772Z" fill="black"/>
+      <path d="M148.905 16.8772H159.875V58.8171H148.905V16.8772ZM179.368 15.949C181.956 15.949 184.347 16.2865 186.541 16.9616C188.735 17.6367 190.648 18.6774 192.279 20.0839C193.91 21.4903 195.176 23.2906 196.076 25.4846C196.977 27.6224 197.427 30.1821 197.427 33.1637V58.8171H186.456V35.1046C186.456 31.5604 185.584 28.9726 183.84 27.3411C182.153 25.6534 179.368 24.8095 175.486 24.8095C172.561 24.8095 169.917 25.3721 167.554 26.4972C165.191 27.6224 163.278 29.0569 161.816 30.8009C160.353 32.4886 159.509 34.2608 159.284 36.1172L159.2 31.8136C159.481 29.8445 160.128 27.9318 161.141 26.0753C162.153 24.2188 163.503 22.5311 165.191 21.0121C166.935 19.4369 168.988 18.1992 171.351 17.2991C173.714 16.399 176.386 15.949 179.368 15.949Z" fill="black"/>
+      <path d="M116.258 27.1723V18.8181H137.27V27.1723H116.258ZM127.904 18.8181H138.874V58.8172H127.904V18.8181ZM95.1617 58.8172V14.5988L106.132 15.949V58.8172H95.1617ZM111.364 0H138.874V8.86055H113.98C112.348 8.80429 110.942 8.97306 109.761 9.36686C108.579 9.76067 107.679 10.492 107.06 11.5609C106.441 12.5735 106.132 14.0362 106.132 15.949L95.1617 14.5988C95.1617 11.2234 95.7806 8.46674 97.0182 6.32896C98.2559 4.13492 100.084 2.53158 102.503 1.51895C104.922 0.506316 107.876 0 111.364 0ZM86.0542 18.9501L119.465 18.8181V27.1723H86.0542V18.9501Z" fill="black"/>
+      <defs>
+        <linearGradient id="finallyLogoLightGradient" x1="76.0542" y1="1.00261" x2="45.2329" y2="76.3748" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#4285F4"/>
+          <stop offset="0.245192" stop-color="#9B72CB"/>
+          <stop offset="0.610577" stop-color="#D96570"/>
+          <stop offset="1" stop-color="#3EC6C0"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <svg class="brand-logo-dark" width="362" height="76" viewBox="0 0 362 76" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M65.5472 10.1357L54.5394 -5.46548e-06L-7.02145e-07 -4.81511e-06L0 58.8807L76.0542 58.8807L76.0542 19.0135L65.5472 10.1357ZM11.0401 47.8405L11.0401 11.0401L44.097 11.0401L44.097 30.2717L65.0141 30.2717L65.0141 47.8405L11.0401 47.8405Z" fill="url(#finallyLogoDarkGradient)"/>
+      <path d="M310.418 16.8772H322.064L340.207 57.1294L330.755 58.8171L310.418 16.8772ZM361.725 16.8772L332.696 75.6944H321.304L333.709 52.5726L349.995 16.8772H361.725Z" fill="white"/>
+      <path d="M292.15 0H303.12V58.8172H292.15V0Z" fill="white"/>
+      <path d="M269.241 0H280.211V58.8172H269.241V0Z" fill="white"/>
+      <path d="M227.836 59.7454C223.673 59.7454 219.875 58.8453 216.444 57.045C213.068 55.1885 210.368 52.6288 208.343 49.3659C206.374 46.0467 205.389 42.2212 205.389 37.8894C205.389 33.445 206.402 29.5914 208.427 26.3284C210.452 23.0655 213.181 20.5339 216.613 18.7337C220.101 16.8772 224.039 15.9489 228.427 15.9489C233.265 15.9489 237.147 16.9334 240.072 18.9025C243.054 20.8152 245.219 23.4312 246.57 26.7504C247.92 30.0696 248.595 33.7826 248.595 37.8894C248.595 40.3647 248.201 42.8963 247.414 45.4841C246.626 48.0157 245.416 50.3785 243.785 52.5725C242.153 54.7103 240.016 56.4543 237.372 57.8045C234.727 59.0984 231.549 59.7454 227.836 59.7454ZM231.38 51.3068C234.699 51.3068 237.568 50.7442 239.988 49.619C242.407 48.4939 244.263 46.9187 245.557 44.8934C246.851 42.8681 247.498 40.5335 247.498 37.8894C247.498 35.0202 246.823 32.6011 245.473 30.6321C244.179 28.6069 242.322 27.0879 239.903 26.0753C237.54 25.0064 234.699 24.4719 231.38 24.4719C226.711 24.4719 223.082 25.7096 220.494 28.1849C217.906 30.604 216.613 33.8388 216.613 37.8894C216.613 40.5897 217.231 42.9525 218.469 44.9778C219.707 46.9468 221.423 48.4939 223.617 49.619C225.867 50.7442 228.455 51.3068 231.38 51.3068ZM247.498 16.8772H258.468V58.8171H248.257C248.257 58.8171 248.173 58.2827 248.004 57.2138C247.892 56.0886 247.779 54.6822 247.667 52.9945C247.554 51.3068 247.498 49.6472 247.498 48.0157V16.8772Z" fill="white"/>
+      <path d="M148.905 16.8772H159.875V58.8171H148.905V16.8772ZM179.368 15.9489C181.956 15.9489 184.347 16.2865 186.541 16.9616C188.735 17.6367 190.648 18.6774 192.279 20.0839C193.91 21.4903 195.176 23.2905 196.076 25.4846C196.977 27.6224 197.427 30.1821 197.427 33.1637V58.8171H186.456V35.1046C186.456 31.5604 185.584 28.9725 183.84 27.3411C182.153 25.6534 179.368 24.8095 175.486 24.8095C172.561 24.8095 169.917 25.3721 167.554 26.4972C165.191 27.6224 163.278 29.0569 161.816 30.8009C160.353 32.4886 159.509 34.2607 159.284 36.1172L159.2 31.8135C159.481 29.8445 160.128 27.9318 161.141 26.0753C162.153 24.2188 163.503 22.5311 165.191 21.0121C166.935 19.4369 168.988 18.1992 171.351 17.2991C173.714 16.399 176.386 15.9489 179.368 15.9489Z" fill="white"/>
+      <path d="M116.258 27.1723V18.8181H137.27V27.1723H116.258ZM127.904 18.8181H138.874V58.8172H127.904V18.8181ZM95.1617 58.8172V14.5988L106.132 15.949V58.8172H95.1617ZM111.364 0H138.874V8.86055H113.98C112.348 8.80429 110.942 8.97306 109.761 9.36686C108.579 9.76067 107.679 10.492 107.06 11.5609C106.441 12.5735 106.132 14.0362 106.132 15.949L95.1617 14.5988C95.1617 11.2234 95.7806 8.46674 97.0182 6.32896C98.2559 4.13492 100.084 2.53158 102.503 1.51895C104.922 0.506316 107.876 0 111.364 0ZM86.0542 18.9501L119.465 18.8181V27.1723H86.0542V18.9501Z" fill="white"/>
+      <defs>
+        <linearGradient id="finallyLogoDarkGradient" x1="76.0542" y1="1.00261" x2="45.2329" y2="76.3748" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#4285F4"/>
+          <stop offset="0.245192" stop-color="#9B72CB"/>
+          <stop offset="0.610577" stop-color="#D96570"/>
+          <stop offset="1" stop-color="#3EC6C0"/>
+        </linearGradient>
+      </defs>
+    </svg>
   </div>
-  <div class="brand"><b>Pressly PDF Export</b><span id="brandSub">Print-ready export</span></div>
   <div class="topbar-page"><span class="pgdot"></span><span id="pageLabel">Figma</span></div>
   <div class="topbar-controls">
     <div class="mini-seg" id="themeSeg" role="group" aria-label="Theme">
@@ -480,7 +509,6 @@ const $ = id => document.getElementById(id);
 
 const I18N = {
   en: {
-    brandSub: 'Print-ready export',
     themeAria: 'Theme',
     langAria: 'Language',
     lightTheme: 'Light',
@@ -563,7 +591,6 @@ const I18N = {
     off: 'off',
   },
   pl: {
-    brandSub: 'Eksport gotowy do druku',
     themeAria: 'Motyw',
     langAria: 'Język',
     lightTheme: 'Jasny',
@@ -699,7 +726,6 @@ function applyLocale() {
   $('langSeg').setAttribute('aria-label', t('langAria'));
   setText('[data-theme-option="light"]', t('lightTheme'));
   setText('[data-theme-option="dark"]', t('darkTheme'));
-  setText('#brandSub', t('brandSub'));
   setText('.col-l > .card .ttl', t('frames'));
   setText('#selectAll', t('selectAll'));
   setText('#deselectAll', t('deselectAll'));
@@ -1317,7 +1343,7 @@ function setMeta(doc) {
   const a = $('metaAuthor').value.trim();
   const s = $('metaSubject').value.trim();
   if (t) doc.setTitle(t); if (a) doc.setAuthor(a); if (s) doc.setSubject(s);
-  doc.setCreator('Pressly - PDF Export — Figma Plugin');
+  doc.setCreator('Finally — Better exports for Figma');
 }
 
 function addCropMarksRgb(page) {
@@ -1381,7 +1407,7 @@ function cmykOpts() {
     meta: {
       title: $('metaTitle').value.trim(),
       author: $('metaAuthor').value.trim(),
-      creator: 'Pressly - PDF Export',
+      creator: 'Finally — Better exports for Figma',
     },
   };
 }
